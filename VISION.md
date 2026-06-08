@@ -45,3 +45,6 @@ storage decisions.
 - Hidden persistence of chat messages
 - Unbounded public chat behavior
 - Framework rewrites without preserving tutorial clarity
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
