@@ -12,3 +12,5 @@
 - Added dependency metadata for the legacy Tornado 4 sample API.
 - Made WebSocket close handling idempotent by discarding absent callbacks.
 - Added generated Python artifact ignores and documented verification steps.
+- Added canonical `docs/plans` coverage and a docs-plan checker under
+  `make check`.

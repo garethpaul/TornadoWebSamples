@@ -12,9 +12,17 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 ## Repository Contents
 
 - `README.md` - project overview and local usage notes
+- `CHANGES.md` - maintenance history for Tornado chat checks
 - `comet_chat` - source or example code
+- `Makefile` - local verification entry points
+- `docs/plans` - completed maintenance plans for the current baseline
+- `plans` - historical implementation notes
+- `requirements.txt` - runtime dependency notes
+- `scripts` - documentation-plan validators
 - `SECURITY.md` - security reporting and disclosure guidance
 - `socket_chat` - source or example code
+- `test-requirements.txt` - test dependency notes
+- `tests` - focused handler and static asset tests
 - `VISION.md` - project direction and maintenance guardrails
 
 Additional scan context:
@@ -50,6 +58,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - `make check` runs Python syntax checks, focused chat-handler tests, and
   static asset checks for browser-side message rendering.
+- `make check` also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -66,6 +75,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
+- See `docs/plans/2026-06-08-tornado-web-samples-baseline.md` for the
+  canonical Tornado chat sample baseline.
 
 ## Contributing
 

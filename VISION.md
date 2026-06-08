@@ -18,6 +18,7 @@ Priority:
 - Keep setup and quick-start instructions simple
 - Treat in-memory message state as demo-only
 - Keep browser message rendering escaped by default
+- Keep completed maintenance plans under `docs/plans`
 - Avoid implying production chat readiness
 
 Next priorities:

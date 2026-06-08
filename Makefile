@@ -4,6 +4,7 @@ PYTHON ?= python3
 
 lint:
 	$(PYTHON) -m py_compile comet_chat/application.py socket_chat/application.py
+	$(PYTHON) scripts/check_docs_plans.py
 
 test:
 	$(PYTHON) -m pytest -q
