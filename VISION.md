@@ -39,7 +39,6 @@ Canonical security policy and reporting:
 
 - [`SECURITY.md`](SECURITY.md)
 
-
 Chat demos can expose user input. These examples should not be deployed as-is
 to the public internet without authentication, input handling, rate limits, and
 storage decisions.
