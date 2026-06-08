@@ -39,7 +39,7 @@ Chat demos can expose user input. These examples should not be deployed as-is
 to the public internet without authentication, input handling, rate limits, and
 storage decisions.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Production deployment claims
 - Hidden persistence of chat messages
