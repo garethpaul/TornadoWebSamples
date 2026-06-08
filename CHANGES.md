@@ -2,6 +2,7 @@
 
 ## 2026-06-08
 
+- Added `make check` as the shared repository verification alias.
 - Escaped browser-side chat rendering by appending messages as text nodes in
   both comet and WebSocket samples.
 - Fixed the WebSocket browser error logger to call `console.error`.
