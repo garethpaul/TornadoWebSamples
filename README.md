@@ -66,9 +66,3 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Contributing
 
 Keep changes small and tied to the project that is already present in this repository. For code changes, document the toolchain used, avoid committing generated dependency directories or local configuration, and update this README when setup or verification steps change.
-
-## Existing Project Notes
-
-Prior README summary:
-
-> Tornado Web Examples This is a collection of apps that demonstrate Tornado Web. It is a code playground for myself and anyone else interested in testing what Tornado can do. Installation To install [Tornado](http://www.tornadoweb.org/), simply download or install via the pip command;
