@@ -2,7 +2,7 @@ jQuery ($) ->
 
     # simple log
     log = (message) -> console?.log message
-    error = (message) -> console?.erro message
+    error = (message) -> console?.error message
 
     messages = $ 'ul#messages'
 
@@ -10,8 +10,7 @@ jQuery ($) ->
 
     websocket.onmessage = (event) ->
         log "Receive: #{event.data}"
-        li = "<li>#{message}</li>"
-        messages.append "<li>#{event.data}</li>"
+        messages.append $("<li>").text event.data
 
     websocket.onerror = (event) ->
         error event

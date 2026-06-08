@@ -11,8 +11,7 @@ jQuery ($) ->
             type: 'get'
             dataType: 'json'
             success: (data) ->
-                li = "<li>#{data.message}</li>"
-                messages.append "<li>#{data.message}</li>"
+                messages.append $("<li>").text data.message
                 setTimeout getMessages, 0 # this send the app into comet mode
 
     setTimeout getMessages, 200

@@ -2,6 +2,10 @@
 
 ## 2026-06-08
 
+- Escaped browser-side chat rendering by appending messages as text nodes in
+  both comet and WebSocket samples.
+- Fixed the WebSocket browser error logger to call `console.error`.
+- Added focused static asset tests for client-side message rendering.
 - Added a Makefile verification gate for Python syntax checks and focused
   chat-handler tests.
 - Added dependency metadata for the legacy Tornado 4 sample API.

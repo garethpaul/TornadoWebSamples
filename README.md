@@ -20,9 +20,9 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 Additional scan context:
 
 - Source directories: comet_chat, socket_chat
-- Dependency and build manifests: none detected
-- Entry points or build surfaces: none detected
-- Test-looking files: no obvious test files detected
+- Dependency and build manifests: Makefile, requirements.txt, test-requirements.txt
+- Entry points or build surfaces: comet_chat/application.py, socket_chat/application.py
+- Test-looking files: tests/test_chat_handlers.py, tests/test_static_assets.py
 
 ## Getting Started
 
@@ -48,7 +48,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
-- `make verify` runs Python syntax checks and focused chat-handler tests.
+- `make verify` runs Python syntax checks, focused chat-handler tests, and
+  static asset checks for browser-side message rendering.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

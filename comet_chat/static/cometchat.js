@@ -12,9 +12,7 @@
         type: 'get',
         dataType: 'json',
         success: function(data) {
-          var li;
-          li = "<li>" + data.message + "</li>";
-          messages.append("<li>" + data.message + "</li>");
+          messages.append($("<li>").text(data.message));
           return setTimeout(getMessages, 0);
         }
       });

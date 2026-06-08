@@ -17,6 +17,7 @@ Priority:
 - Preserve comet and WebSocket chat examples
 - Keep setup and quick-start instructions simple
 - Treat in-memory message state as demo-only
+- Keep browser message rendering escaped by default
 - Avoid implying production chat readiness
 
 Next priorities:
