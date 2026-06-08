@@ -1,0 +1,47 @@
+## Tornado Web Samples Vision
+
+Tornado Web Samples is a small playground for Tornado chat examples, including
+long-polling comet chat and WebSocket chat.
+
+The repository is useful as a compact demonstration of Tornado request
+handlers, asynchronous callbacks, WebSocket handlers, in-memory message
+broadcasting, templates, and static assets.
+
+The goal is to preserve the examples while making their in-memory, unauthenticated
+demo nature clear.
+
+The current focus is:
+
+Priority:
+
+- Preserve comet and WebSocket chat examples
+- Keep setup and quick-start instructions simple
+- Treat in-memory message state as demo-only
+- Avoid implying production chat readiness
+
+Next priorities:
+
+- Document supported Python and Tornado versions
+- Add small tests for message broadcast behavior
+- Add input escaping and validation notes
+- Separate long-polling and WebSocket caveats in the README
+
+Contribution rules:
+
+- One PR = one focused example, handler, template, test, or documentation change.
+- Keep examples runnable with minimal setup.
+- Do not add persistence or auth without clear tutorial framing.
+- Explain any Tornado API modernization.
+
+## Security And Responsible Use
+
+Chat demos can expose user input. These examples should not be deployed as-is
+to the public internet without authentication, input handling, rate limits, and
+storage decisions.
+
+## What We Will Not Merge For Now
+
+- Production deployment claims
+- Hidden persistence of chat messages
+- Unbounded public chat behavior
+- Framework rewrites without preserving tutorial clarity
