@@ -18,7 +18,7 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         """
         Post a message here
         """
-        self.callbacks.remove(self)
+        self.callbacks.discard(self)
 
     def on_message(self, message):
         """

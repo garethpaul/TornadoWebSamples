@@ -1,0 +1,54 @@
+import importlib.util
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_module(name, relative_path):
+    spec = importlib.util.spec_from_file_location(name, ROOT / relative_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_comet_messages_notify_and_clear_callbacks():
+    comet = load_module("comet_app", "comet_chat/application.py")
+    messages = comet.Messages()
+    received = []
+
+    messages.register_callback(received.append)
+    messages.add("hello")
+
+    assert received == ["hello"]
+    assert messages.callbacks == []
+
+
+def test_socket_close_is_idempotent():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+    handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    socket_app.MessageHandler.callbacks = set()
+
+    handler.on_close()
+    handler.on_close()
+
+    assert handler not in socket_app.MessageHandler.callbacks
+
+
+def test_socket_message_broadcasts_body_only():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+
+    class Client:
+        def __init__(self):
+            self.messages = []
+
+        def write_message(self, message):
+            self.messages.append(message)
+
+    client = Client()
+    socket_app.MessageHandler.callbacks = {client}
+    handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+
+    handler.on_message('{"body": "hello"}')
+
+    assert client.messages == ["hello"]

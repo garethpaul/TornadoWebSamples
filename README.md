@@ -29,23 +29,26 @@ Additional scan context:
 ### Prerequisites
 
 - Git
+- Python 3
 
 ### Setup
 
 ```bash
 git clone https://github.com/garethpaul/TornadoWebSamples.git
 cd TornadoWebSamples
+python3 -m pip install -r requirements.txt -r test-requirements.txt
 ```
 
 The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
 
 ## Running or Using the Project
 
-- No single runtime entry point was identified. Start by reading the source files and manifests listed above.
+- Run either sample with Python after installing requirements:
+  `python3 comet_chat/application.py` or `python3 socket_chat/application.py`.
 
 ## Testing and Verification
 
-- No dedicated automated test command was identified from the checked-in files. Verify changes by running the relevant build or manually exercising the sample.
+- `make verify` runs Python syntax checks and focused chat-handler tests.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
