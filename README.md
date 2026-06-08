@@ -71,4 +71,4 @@ Keep changes small and tied to the project that is already present in this repos
 
 Prior README summary:
 
-> Tornado Web Examples <!-- README-OVERVIEW-IMAGE --> This is a collection of apps that demonstrate Tornado Web. It is a code playground for myself and anyone else interested in testing what Tornado can do. Installation To install [Tornado](http://www.tornadoweb.org/), simply download or install via the pip command;
+> Tornado Web Examples This is a collection of apps that demonstrate Tornado Web. It is a code playground for myself and anyone else interested in testing what Tornado can do. Installation To install [Tornado](http://www.tornadoweb.org/), simply download or install via the pip command;
