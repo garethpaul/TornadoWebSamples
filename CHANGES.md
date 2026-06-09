@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Snapshot and clear comet callback queues before dispatching messages so new
+  waits registered during dispatch survive for the next message.
+- Added no-network callback dispatch ordering coverage.
 - Removed abandoned comet long-poll callbacks when client connections close and
   added no-network handler coverage.
 - Added browser-side chat input length hints aligned with the server-side

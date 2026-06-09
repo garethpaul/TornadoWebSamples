@@ -24,6 +24,31 @@ def test_comet_messages_notify_and_clear_callbacks():
     assert messages.callbacks == []
 
 
+def test_comet_messages_keep_new_callbacks_for_next_dispatch():
+    comet = load_module("comet_app", "comet_chat/application.py")
+    messages = comet.Messages()
+    received = []
+
+    def second_callback(message):
+        received.append(("second", message))
+
+    def first_callback(message):
+        received.append(("first", message))
+        messages.register_callback(second_callback)
+
+    messages.register_callback(first_callback)
+
+    messages.add("hello")
+
+    assert received == [("first", "hello")]
+    assert messages.callbacks == [second_callback]
+
+    messages.add("again")
+
+    assert received == [("first", "hello"), ("second", "again")]
+    assert messages.callbacks == []
+
+
 def test_comet_messages_keep_callbacks_per_instance():
     comet = load_module("comet_app", "comet_chat/application.py")
     first = comet.Messages()

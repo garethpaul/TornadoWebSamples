@@ -65,7 +65,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Handler tests require WebSocket origin checks to accept only the same host and
   comet long-poll callback queues to stay isolated per message store. They also
   require abandoned comet long-poll callbacks to be removed when a connection
-  closes.
+  closes. Comet dispatch tests require callback queues to be snapshot and
+  cleared before firing so callbacks registered during dispatch wait for the
+  next message.
 - `make check` also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -99,6 +101,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   length hint coverage.
 - See `docs/plans/2026-06-09-comet-callback-close-cleanup.md` for abandoned
   long-poll callback cleanup coverage.
+- See `docs/plans/2026-06-09-comet-callback-dispatch-snapshot.md` for comet
+  callback dispatch ordering coverage.
 
 ## Contributing
 

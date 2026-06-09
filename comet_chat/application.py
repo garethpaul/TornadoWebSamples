@@ -32,9 +32,10 @@ class Messages(object):
         For every message added, all the callbacks are fired. These callbacks
         are requests waiting to hear for changes
         """
-        for cb in self.callbacks:
+        callbacks = self.callbacks
+        self.callbacks = [] # reset before callbacks fire
+        for cb in callbacks:
             cb(message)
-        self.callbacks = [] # reset the callbacks
 
     def register_callback(self, callback):
         """
