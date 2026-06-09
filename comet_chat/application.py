@@ -24,7 +24,8 @@ class Messages(object):
     callbacks waiting to hear new messages
     """
 
-    callbacks = []
+    def __init__(self):
+        self.callbacks = []
 
     def add(self, message):
         """

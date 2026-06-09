@@ -60,7 +60,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   validation tests, and static asset checks for browser-side message rendering.
 - Static asset checks also keep chat clients on same-origin message endpoints
   and require HTTPS for the shared external reset stylesheet.
-- Handler tests require WebSocket origin checks to accept only the same host.
+- Handler tests require WebSocket origin checks to accept only the same host and
+  comet long-poll callback queues to stay isolated per message store.
 - `make check` also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -88,6 +89,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   external asset URL coverage.
 - See `docs/plans/2026-06-09-websocket-origin-check.md` for same-host
   WebSocket origin coverage.
+- See `docs/plans/2026-06-09-comet-callback-isolation.md` for long-poll
+  callback isolation coverage.
 
 ## Contributing
 

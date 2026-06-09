@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Moved comet chat callback storage onto each `Messages` instance.
+- Added handler coverage so long-poll callbacks cannot leak across
+  independent message stores.
 - Added an explicit same-host WebSocket origin check to the socket chat sample.
 - Added no-network handler coverage for accepted and rejected origins.
 

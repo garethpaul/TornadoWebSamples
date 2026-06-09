@@ -24,6 +24,17 @@ def test_comet_messages_notify_and_clear_callbacks():
     assert messages.callbacks == []
 
 
+def test_comet_messages_keep_callbacks_per_instance():
+    comet = load_module("comet_app", "comet_chat/application.py")
+    first = comet.Messages()
+    second = comet.Messages()
+
+    first.register_callback(lambda message: message)
+
+    assert len(first.callbacks) == 1
+    assert second.callbacks == []
+
+
 def test_comet_message_normalization_trims_and_bounds_input():
     comet = load_module("comet_app", "comet_chat/application.py")
 

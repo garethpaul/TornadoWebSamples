@@ -19,6 +19,7 @@ Priority:
 - Treat in-memory message state as demo-only
 - Keep browser message rendering escaped by default
 - Keep chat message input bounded and validated before broadcasting
+- Keep comet long-poll callback queues isolated per message store
 - Keep browser clients on same-origin chat endpoints and HTTPS external assets
 - Keep WebSocket origin checks restricted to the same host
 - Keep completed maintenance plans under `docs/plans`
