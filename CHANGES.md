@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Added browser-side chat input length hints aligned with the server-side
+  message limit.
 - Moved comet chat callback storage onto each `Messages` instance.
 - Added handler coverage so long-poll callbacks cannot leak across
   independent message stores.

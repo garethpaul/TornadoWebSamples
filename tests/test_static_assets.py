@@ -67,3 +67,12 @@ def test_templates_use_https_external_stylesheets():
     for template in (comet_template, socket_template):
         assert "http://yui.yahooapis.com" not in template
         assert "https://yui.yahooapis.com/3.5.1/build/cssreset/cssreset-min.css" in template
+
+
+def test_templates_hint_server_message_length_limit():
+    comet_template = read_asset("comet_chat/templates/index.html")
+    socket_template = read_asset("socket_chat/templates/index.html")
+
+    for template in (comet_template, socket_template):
+        assert 'id="message"' in template
+        assert 'maxlength="500"' in template

@@ -19,6 +19,7 @@ Priority:
 - Treat in-memory message state as demo-only
 - Keep browser message rendering escaped by default
 - Keep chat message input bounded and validated before broadcasting
+- Keep browser input hints aligned with server-side message limits
 - Keep comet long-poll callback queues isolated per message store
 - Keep browser clients on same-origin chat endpoints and HTTPS external assets
 - Keep WebSocket origin checks restricted to the same host
@@ -54,6 +55,7 @@ storage decisions.
 - Production deployment claims
 - Hidden persistence of chat messages
 - Unbounded public chat behavior
+- Browser inputs that imply unbounded message size
 - Cross-origin WebSocket access without a tutorial note
 - Framework rewrites without preserving tutorial clarity
 

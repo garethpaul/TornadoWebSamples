@@ -59,7 +59,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check` runs Python syntax checks, focused chat-handler tests, message
   validation tests, and static asset checks for browser-side message rendering.
 - Static asset checks also keep chat clients on same-origin message endpoints
-  and require HTTPS for the shared external reset stylesheet.
+  and require HTTPS for the shared external reset stylesheet. Template checks
+  keep the browser input length hint aligned with the server-side message
+  limit.
 - Handler tests require WebSocket origin checks to accept only the same host and
   comet long-poll callback queues to stay isolated per message store.
 - `make check` also requires completed canonical plans under `docs/plans`.
@@ -91,6 +93,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   WebSocket origin coverage.
 - See `docs/plans/2026-06-09-comet-callback-isolation.md` for long-poll
   callback isolation coverage.
+- See `docs/plans/2026-06-09-message-length-hint.md` for browser message
+  length hint coverage.
 
 ## Contributing
 
