@@ -4,9 +4,11 @@ import tornado.ioloop
 import tornado.options
 from tornado import autoreload
 import json
+import logging
 
 
 MAX_MESSAGE_LENGTH = 500
+logger = logging.getLogger(__name__)
 
 
 def normalize_message(message):
@@ -35,7 +37,10 @@ class Messages(object):
         callbacks = self.callbacks
         self.callbacks = [] # reset before callbacks fire
         for cb in callbacks:
-            cb(message)
+            try:
+                cb(message)
+            except Exception:
+                logger.exception("Could not deliver comet chat message")
 
     def register_callback(self, callback):
         """

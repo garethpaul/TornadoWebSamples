@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Isolated comet callback delivery exceptions so one failed long-poll callback
+  does not stop later callbacks in the same dispatch batch.
 - Snapshot and clear comet callback queues before dispatching messages so new
   waits registered during dispatch survive for the next message.
 - Added no-network callback dispatch ordering coverage.

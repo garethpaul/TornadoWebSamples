@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS_PLANS = ROOT / "docs" / "plans"
 CANONICAL_PLAN = DOCS_PLANS / "2026-06-08-tornado-web-samples-baseline.md"
 COMET_DISPATCH_PLAN = DOCS_PLANS / "2026-06-09-comet-callback-dispatch-snapshot.md"
+COMET_EXCEPTION_PLAN = DOCS_PLANS / "2026-06-09-comet-callback-exception-isolation.md"
 
 
 def main():
@@ -16,6 +17,8 @@ def main():
         failures.append("docs/plans/2026-06-08-tornado-web-samples-baseline.md is missing")
     if not COMET_DISPATCH_PLAN.exists():
         failures.append("docs/plans/2026-06-09-comet-callback-dispatch-snapshot.md is missing")
+    if not COMET_EXCEPTION_PLAN.exists():
+        failures.append("docs/plans/2026-06-09-comet-callback-exception-isolation.md is missing")
 
     plans = sorted(DOCS_PLANS.glob("*.md")) if DOCS_PLANS.exists() else []
     if not plans:
@@ -33,6 +36,10 @@ def main():
         failures.append("comet MessageHandler must clean up callbacks on connection close")
     if "callbacks = self.callbacks" not in comet or "self.callbacks = [] # reset before callbacks fire" not in comet:
         failures.append("comet Messages.add must snapshot and clear callbacks before dispatch")
+    if "logger.exception(\"Could not deliver comet chat message\")" not in comet:
+        failures.append("comet Messages.add must log callback delivery failures")
+    if "except Exception:" not in comet:
+        failures.append("comet Messages.add must isolate callback delivery exceptions")
 
     if failures:
         print("Documentation plan checks failed:", file=sys.stderr)

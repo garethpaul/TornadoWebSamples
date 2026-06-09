@@ -67,7 +67,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   require abandoned comet long-poll callbacks to be removed when a connection
   closes. Comet dispatch tests require callback queues to be snapshot and
   cleared before firing so callbacks registered during dispatch wait for the
-  next message.
+  next message. They also require one failed callback delivery not to stop later
+  callbacks in the same batch.
 - `make check` also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -103,6 +104,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   long-poll callback cleanup coverage.
 - See `docs/plans/2026-06-09-comet-callback-dispatch-snapshot.md` for comet
   callback dispatch ordering coverage.
+- See `docs/plans/2026-06-09-comet-callback-exception-isolation.md` for comet
+  callback delivery exception isolation.
 
 ## Contributing
 

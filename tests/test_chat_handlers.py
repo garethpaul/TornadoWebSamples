@@ -49,6 +49,23 @@ def test_comet_messages_keep_new_callbacks_for_next_dispatch():
     assert messages.callbacks == []
 
 
+def test_comet_messages_continue_dispatch_after_callback_error():
+    comet = load_module("comet_app", "comet_chat/application.py")
+    messages = comet.Messages()
+    received = []
+
+    def failing_callback(message):
+        raise RuntimeError("closed connection")
+
+    messages.register_callback(failing_callback)
+    messages.register_callback(received.append)
+
+    messages.add("hello")
+
+    assert received == ["hello"]
+    assert messages.callbacks == []
+
+
 def test_comet_messages_keep_callbacks_per_instance():
     comet = load_module("comet_app", "comet_chat/application.py")
     first = comet.Messages()

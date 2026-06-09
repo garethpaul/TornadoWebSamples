@@ -23,6 +23,7 @@ Priority:
 - Keep comet long-poll callback queues isolated per message store
 - Remove abandoned comet long-poll callbacks when connections close
 - Keep comet callback dispatch snapshot-based so new waits survive current sends
+- Keep comet callback delivery failures isolated to the failing callback
 - Keep browser clients on same-origin chat endpoints and HTTPS external assets
 - Keep WebSocket origin checks restricted to the same host
 - Keep completed maintenance plans under `docs/plans`
