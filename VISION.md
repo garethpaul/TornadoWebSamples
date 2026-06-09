@@ -20,6 +20,7 @@ Priority:
 - Keep browser message rendering escaped by default
 - Keep chat message input bounded and validated before broadcasting
 - Keep browser clients on same-origin chat endpoints and HTTPS external assets
+- Keep WebSocket origin checks restricted to the same host
 - Keep completed maintenance plans under `docs/plans`
 - Avoid implying production chat readiness
 
@@ -52,6 +53,7 @@ storage decisions.
 - Production deployment claims
 - Hidden persistence of chat messages
 - Unbounded public chat behavior
+- Cross-origin WebSocket access without a tutorial note
 - Framework rewrites without preserving tutorial clarity
 
 This list is a roadmap guardrail, not a permanent rule.

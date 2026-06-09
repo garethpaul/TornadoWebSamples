@@ -60,6 +60,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   validation tests, and static asset checks for browser-side message rendering.
 - Static asset checks also keep chat clients on same-origin message endpoints
   and require HTTPS for the shared external reset stylesheet.
+- Handler tests require WebSocket origin checks to accept only the same host.
 - `make check` also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -85,6 +86,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   validation coverage.
 - See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and
   external asset URL coverage.
+- See `docs/plans/2026-06-09-websocket-origin-check.md` for same-host
+  WebSocket origin coverage.
 
 ## Contributing
 

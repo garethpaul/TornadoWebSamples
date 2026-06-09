@@ -23,6 +23,18 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 
     callbacks = set()
 
+    def check_origin(self, origin):
+        host = self.request.headers.get('Host')
+        if not origin or not host:
+            return False
+
+        normalized_origin = origin.lower().rstrip('/')
+        normalized_host = host.lower()
+        return normalized_origin in (
+            'http://' + normalized_host,
+            'https://' + normalized_host,
+        )
+
     def open(self):
         self.callbacks.add(self)
 

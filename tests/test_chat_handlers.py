@@ -45,6 +45,20 @@ def test_socket_close_is_idempotent():
     assert handler not in socket_app.MessageHandler.callbacks
 
 
+def test_socket_check_origin_allows_same_host_only():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+    handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.request = type("Request", (), {
+        "headers": {"Host": "chat.example.test:8000"},
+    })()
+
+    assert handler.check_origin("http://chat.example.test:8000")
+    assert handler.check_origin("https://chat.example.test:8000")
+    assert handler.check_origin("https://CHAT.EXAMPLE.TEST:8000/")
+    assert not handler.check_origin("https://other.example.test:8000")
+    assert not handler.check_origin("")
+
+
 def test_socket_message_broadcasts_body_only():
     socket_app = load_module("socket_app", "socket_chat/application.py")
 

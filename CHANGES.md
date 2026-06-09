@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-09
+
+- Added an explicit same-host WebSocket origin check to the socket chat sample.
+- Added no-network handler coverage for accepted and rejected origins.
+
 ## 2026-06-08
 
 - Added server-side chat message validation for blank, non-string, oversized,
