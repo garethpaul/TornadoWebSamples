@@ -161,6 +161,46 @@ def test_socket_message_broadcasts_body_only():
     assert client.messages == ["hello"]
 
 
+def test_socket_message_continues_after_client_write_error():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+
+    class OrderedCallbacks:
+        def __init__(self, callbacks):
+            self.callbacks = callbacks
+
+        def __iter__(self):
+            return iter(self.callbacks)
+
+        def __contains__(self, callback):
+            return callback in self.callbacks
+
+        def discard(self, callback):
+            if callback in self.callbacks:
+                self.callbacks.remove(callback)
+
+    class FailingClient:
+        def write_message(self, message):
+            raise RuntimeError("closed websocket")
+
+    class Client:
+        def __init__(self):
+            self.messages = []
+
+        def write_message(self, message):
+            self.messages.append(message)
+
+    failing_client = FailingClient()
+    client = Client()
+    socket_app.MessageHandler.callbacks = OrderedCallbacks([failing_client, client])
+    handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+
+    handler.on_message('{"body": "hello"}')
+
+    assert client.messages == ["hello"]
+    assert failing_client not in socket_app.MessageHandler.callbacks
+    assert client in socket_app.MessageHandler.callbacks
+
+
 def test_socket_message_validation_closes_invalid_frames():
     socket_app = load_module("socket_app", "socket_chat/application.py")
 

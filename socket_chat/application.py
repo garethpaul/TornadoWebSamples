@@ -5,9 +5,11 @@ import tornado.options
 import tornado.websocket
 import tornado.escape
 from tornado import autoreload
+import logging
 
 
 MAX_MESSAGE_LENGTH = 500
+logger = logging.getLogger(__name__)
 
 
 def normalize_message(message):
@@ -61,7 +63,11 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
             return
 
         for cb in list(self.callbacks):
-            cb.write_message(body)
+            try:
+                cb.write_message(body)
+            except Exception:
+                logger.exception("Could not deliver websocket chat message")
+                self.callbacks.discard(cb)
 
 
 class MainHandler(tornado.web.RequestHandler):

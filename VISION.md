@@ -24,6 +24,7 @@ Priority:
 - Remove abandoned comet long-poll callbacks when connections close
 - Keep comet callback dispatch snapshot-based so new waits survive current sends
 - Keep comet callback delivery failures isolated to the failing callback
+- Keep WebSocket callback delivery failures isolated to the failing callback
 - Keep browser clients on same-origin chat endpoints and HTTPS external assets
 - Keep WebSocket origin checks restricted to the same host
 - Keep completed maintenance plans under `docs/plans`
@@ -59,6 +60,7 @@ storage decisions.
 - Hidden persistence of chat messages
 - Unbounded public chat behavior
 - Browser inputs that imply unbounded message size
+- Callback delivery failures that stop unrelated chat clients
 - Cross-origin WebSocket access without a tutorial note
 - Framework rewrites without preserving tutorial clarity
 

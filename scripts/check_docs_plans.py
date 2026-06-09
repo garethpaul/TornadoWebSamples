@@ -8,6 +8,7 @@ DOCS_PLANS = ROOT / "docs" / "plans"
 CANONICAL_PLAN = DOCS_PLANS / "2026-06-08-tornado-web-samples-baseline.md"
 COMET_DISPATCH_PLAN = DOCS_PLANS / "2026-06-09-comet-callback-dispatch-snapshot.md"
 COMET_EXCEPTION_PLAN = DOCS_PLANS / "2026-06-09-comet-callback-exception-isolation.md"
+SOCKET_EXCEPTION_PLAN = DOCS_PLANS / "2026-06-09-websocket-callback-exception-isolation.md"
 
 
 def main():
@@ -19,6 +20,8 @@ def main():
         failures.append("docs/plans/2026-06-09-comet-callback-dispatch-snapshot.md is missing")
     if not COMET_EXCEPTION_PLAN.exists():
         failures.append("docs/plans/2026-06-09-comet-callback-exception-isolation.md is missing")
+    if not SOCKET_EXCEPTION_PLAN.exists():
+        failures.append("docs/plans/2026-06-09-websocket-callback-exception-isolation.md is missing")
 
     plans = sorted(DOCS_PLANS.glob("*.md")) if DOCS_PLANS.exists() else []
     if not plans:
@@ -40,6 +43,14 @@ def main():
         failures.append("comet Messages.add must log callback delivery failures")
     if "except Exception:" not in comet:
         failures.append("comet Messages.add must isolate callback delivery exceptions")
+
+    socket = (ROOT / "socket_chat" / "application.py").read_text(encoding="utf-8")
+    if "logger.exception(\"Could not deliver websocket chat message\")" not in socket:
+        failures.append("socket MessageHandler.on_message must log callback delivery failures")
+    if "except Exception:" not in socket:
+        failures.append("socket MessageHandler.on_message must isolate callback delivery exceptions")
+    if "self.callbacks.discard(cb)" not in socket:
+        failures.append("socket MessageHandler.on_message must discard callbacks that fail delivery")
 
     if failures:
         print("Documentation plan checks failed:", file=sys.stderr)

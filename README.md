@@ -68,7 +68,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   closes. Comet dispatch tests require callback queues to be snapshot and
   cleared before firing so callbacks registered during dispatch wait for the
   next message. They also require one failed callback delivery not to stop later
-  callbacks in the same batch.
+  callbacks in the same batch. WebSocket broadcast tests require failed client
+  deliveries to be logged, discarded, and isolated from later callbacks.
 - `make check` also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -106,6 +107,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   callback dispatch ordering coverage.
 - See `docs/plans/2026-06-09-comet-callback-exception-isolation.md` for comet
   callback delivery exception isolation.
+- See `docs/plans/2026-06-09-websocket-callback-exception-isolation.md` for
+  WebSocket callback delivery exception isolation.
 
 ## Contributing
 
