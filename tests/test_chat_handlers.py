@@ -35,6 +35,36 @@ def test_comet_messages_keep_callbacks_per_instance():
     assert second.callbacks == []
 
 
+def test_comet_messages_remove_abandoned_callback():
+    comet = load_module("comet_app", "comet_chat/application.py")
+    messages = comet.Messages()
+    callback = lambda message: message
+
+    messages.register_callback(callback)
+    messages.remove_callback(callback)
+    messages.remove_callback(callback)
+
+    assert messages.callbacks == []
+
+
+def test_comet_handler_removes_waiting_callback_on_connection_close():
+    comet = load_module("comet_app", "comet_chat/application.py")
+    messages = comet.Messages()
+    callback = lambda message: message
+    handler = comet.MessageHandler.__new__(comet.MessageHandler)
+    handler.application = type("Application", (), {
+        "chat_messages": messages,
+    })()
+    handler._message_callback = callback
+    messages.register_callback(callback)
+
+    handler.on_connection_close()
+    handler.on_connection_close()
+
+    assert messages.callbacks == []
+    assert handler._message_callback is None
+
+
 def test_comet_message_normalization_trims_and_bounds_input():
     comet = load_module("comet_app", "comet_chat/application.py")
 

@@ -63,7 +63,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   keep the browser input length hint aligned with the server-side message
   limit.
 - Handler tests require WebSocket origin checks to accept only the same host and
-  comet long-poll callback queues to stay isolated per message store.
+  comet long-poll callback queues to stay isolated per message store. They also
+  require abandoned comet long-poll callbacks to be removed when a connection
+  closes.
 - `make check` also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -95,6 +97,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   callback isolation coverage.
 - See `docs/plans/2026-06-09-message-length-hint.md` for browser message
   length hint coverage.
+- See `docs/plans/2026-06-09-comet-callback-close-cleanup.md` for abandoned
+  long-poll callback cleanup coverage.
 
 ## Contributing
 

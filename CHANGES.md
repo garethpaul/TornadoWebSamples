@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Removed abandoned comet long-poll callbacks when client connections close and
+  added no-network handler coverage.
 - Added browser-side chat input length hints aligned with the server-side
   message limit.
 - Moved comet chat callback storage onto each `Messages` instance.

@@ -21,6 +21,7 @@ Priority:
 - Keep chat message input bounded and validated before broadcasting
 - Keep browser input hints aligned with server-side message limits
 - Keep comet long-poll callback queues isolated per message store
+- Remove abandoned comet long-poll callbacks when connections close
 - Keep browser clients on same-origin chat endpoints and HTTPS external assets
 - Keep WebSocket origin checks restricted to the same host
 - Keep completed maintenance plans under `docs/plans`

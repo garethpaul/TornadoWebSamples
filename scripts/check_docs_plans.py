@@ -23,6 +23,12 @@ def main():
         if "Status: Completed" not in plan or "make check" not in plan:
             failures.append(f"{plan_path.relative_to(ROOT)} must record completed status and make check verification")
 
+    comet = (ROOT / "comet_chat" / "application.py").read_text(encoding="utf-8")
+    if "def remove_callback(self, callback):" not in comet:
+        failures.append("comet Messages must support removing abandoned callbacks")
+    if "def on_connection_close(self):" not in comet:
+        failures.append("comet MessageHandler must clean up callbacks on connection close")
+
     if failures:
         print("Documentation plan checks failed:", file=sys.stderr)
         for failure in failures:

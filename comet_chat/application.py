@@ -43,6 +43,13 @@ class Messages(object):
         if callback not in self.callbacks:
             self.callbacks.append(callback)
 
+    def remove_callback(self, callback):
+        """
+        Remove a waiting callback when its request disconnects
+        """
+        if callback in self.callbacks:
+            self.callbacks.remove(callback)
+
 
 
 class MessageHandler(tornado.web.RequestHandler):
@@ -52,8 +59,18 @@ class MessageHandler(tornado.web.RequestHandler):
         """
         Get the latest messages
         """
+        self._message_callback = self.async_callback(self.on_message)
         self.application.chat_messages.register_callback(
-            self.async_callback(self.on_message))
+            self._message_callback)
+
+    def on_connection_close(self):
+        """
+        Remove abandoned long-poll callbacks
+        """
+        callback = getattr(self, '_message_callback', None)
+        if callback is not None:
+            self.application.chat_messages.remove_callback(callback)
+            self._message_callback = None
 
     def post(self, *args, **kwargs):
         """
@@ -70,6 +87,7 @@ class MessageHandler(tornado.web.RequestHandler):
         """
         We'll json the message out
         """
+        self._message_callback = None
         self.write(json.dumps({'message':message}))
         self.finish()
 
