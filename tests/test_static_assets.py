@@ -42,3 +42,28 @@ def test_socket_chat_reports_browser_errors_to_console():
     assert "console.error(message)" in javascript
     assert "console?.erro message" not in coffee
     assert "console.erro(message)" not in javascript
+
+
+def test_chat_clients_use_same_origin_message_endpoints():
+    comet_coffee = read_asset("comet_chat/static/cometchat.coffee")
+    comet_javascript = read_asset("comet_chat/static/cometchat.js")
+    socket_coffee = read_asset("socket_chat/static/socketchat.coffee")
+    socket_javascript = read_asset("socket_chat/static/socketchat.js")
+
+    assert "url: '/message'" in comet_coffee
+    assert "url: '/message'" in comet_javascript
+    assert "//localhost:8000/message" not in comet_coffee
+    assert "//localhost:8000/message" not in comet_javascript
+    assert "window.location.host" in socket_coffee
+    assert "window.location.host" in socket_javascript
+    assert "ws://localhost:8000/message" not in socket_coffee
+    assert "ws://localhost:8000/message" not in socket_javascript
+
+
+def test_templates_use_https_external_stylesheets():
+    comet_template = read_asset("comet_chat/templates/index.html")
+    socket_template = read_asset("socket_chat/templates/index.html")
+
+    for template in (comet_template, socket_template):
+        assert "http://yui.yahooapis.com" not in template
+        assert "https://yui.yahooapis.com/3.5.1/build/cssreset/cssreset-min.css" in template

@@ -16,3 +16,5 @@
 - Added generated Python artifact ignores and documented verification steps.
 - Added canonical `docs/plans` coverage and a docs-plan checker under
   `make check`.
+- Kept browser chat clients on same-origin message endpoints and switched the
+  shared external reset stylesheet to HTTPS.

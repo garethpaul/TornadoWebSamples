@@ -6,7 +6,9 @@ jQuery ($) ->
 
     messages = $ 'ul#messages'
 
-    websocket = new WebSocket 'ws://localhost:8000/message'
+    messagePath = '/message'
+    websocketScheme = if window.location.protocol is 'https:' then 'wss://' else 'ws://'
+    websocket = new WebSocket "#{websocketScheme}#{window.location.host}#{messagePath}"
 
     websocket.onmessage = (event) ->
         log "Receive: #{event.data}"

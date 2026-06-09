@@ -8,7 +8,7 @@
     messages = $('ul#messages');
     getMessages = function() {
       return $.ajax({
-        url: '//localhost:8000/message',
+        url: '/message',
         type: 'get',
         dataType: 'json',
         success: function(data) {
@@ -24,7 +24,7 @@
         e.preventDefault();
         myMessage = this.value;
         return $.ajax({
-          url: '//localhost:8000/message',
+          url: '/message',
           type: 'post',
           dataType: 'json',
           data: {

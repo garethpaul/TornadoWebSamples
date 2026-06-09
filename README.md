@@ -58,6 +58,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - `make check` runs Python syntax checks, focused chat-handler tests, message
   validation tests, and static asset checks for browser-side message rendering.
+- Static asset checks also keep chat clients on same-origin message endpoints
+  and require HTTPS for the shared external reset stylesheet.
 - `make check` also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -70,6 +72,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include comet_chat/application.py, comet_chat/templates/index.html, socket_chat/application.py, socket_chat/static/socketchat.js, and 1 more.
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include comet_chat/application.py, comet_chat/static/cometchat.js, socket_chat/static/socketchat.js.
+- Browser chat clients should use same-origin message endpoints rather than
+  hard-coded localhost URLs.
 
 ## Maintenance Notes
 
@@ -79,6 +83,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   canonical Tornado chat sample baseline.
 - See `docs/plans/2026-06-08-message-validation.md` for chat message input
   validation coverage.
+- See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and
+  external asset URL coverage.
 
 ## Contributing
 

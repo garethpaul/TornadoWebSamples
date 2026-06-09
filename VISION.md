@@ -19,6 +19,7 @@ Priority:
 - Treat in-memory message state as demo-only
 - Keep browser message rendering escaped by default
 - Keep chat message input bounded and validated before broadcasting
+- Keep browser clients on same-origin chat endpoints and HTTPS external assets
 - Keep completed maintenance plans under `docs/plans`
 - Avoid implying production chat readiness
 

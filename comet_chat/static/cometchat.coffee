@@ -7,7 +7,7 @@ jQuery ($) ->
 
     getMessages = ->
         $.ajax
-            url: '//localhost:8000/message'
+            url: '/message'
             type: 'get'
             dataType: 'json'
             success: (data) ->
@@ -21,7 +21,7 @@ jQuery ($) ->
             e.preventDefault()
             myMessage = @value
             $.ajax
-                url: '//localhost:8000/message'
+                url: '/message'
                 type: 'post'
                 dataType: 'json'
                 data:

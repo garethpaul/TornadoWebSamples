@@ -1,7 +1,7 @@
 (function() {
 
   jQuery(function($) {
-    var error, log, messages, websocket;
+    var error, log, messagePath, messages, websocket, websocketScheme;
     log = function(message) {
       return typeof console !== "undefined" && console !== null ? console.log(message) : void 0;
     };
@@ -9,7 +9,9 @@
       return typeof console !== "undefined" && console !== null ? console.error(message) : void 0;
     };
     messages = $('ul#messages');
-    websocket = new WebSocket('ws://localhost:8000/message');
+    messagePath = '/message';
+    websocketScheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    websocket = new WebSocket("" + websocketScheme + window.location.host + messagePath);
     websocket.onmessage = function(event) {
       log("Receive: " + event.data);
       return messages.append($("<li>").text(event.data));
