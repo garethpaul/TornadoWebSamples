@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- Added server-side chat message validation for blank, non-string, oversized,
+  and malformed WebSocket inputs.
 - Added `make check` as the shared repository verification alias.
 - Escaped browser-side chat rendering by appending messages as text nodes in
   both comet and WebSocket samples.

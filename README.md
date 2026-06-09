@@ -56,8 +56,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
-- `make check` runs Python syntax checks, focused chat-handler tests, and
-  static asset checks for browser-side message rendering.
+- `make check` runs Python syntax checks, focused chat-handler tests, message
+  validation tests, and static asset checks for browser-side message rendering.
 - `make check` also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -77,6 +77,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-tornado-web-samples-baseline.md` for the
   canonical Tornado chat sample baseline.
+- See `docs/plans/2026-06-08-message-validation.md` for chat message input
+  validation coverage.
 
 ## Contributing
 

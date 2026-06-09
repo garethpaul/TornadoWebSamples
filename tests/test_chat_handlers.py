@@ -24,6 +24,16 @@ def test_comet_messages_notify_and_clear_callbacks():
     assert messages.callbacks == []
 
 
+def test_comet_message_normalization_trims_and_bounds_input():
+    comet = load_module("comet_app", "comet_chat/application.py")
+
+    assert comet.normalize_message("  hello  ") == "hello"
+    assert comet.normalize_message("") is None
+    assert comet.normalize_message("   ") is None
+    assert comet.normalize_message(None) is None
+    assert comet.normalize_message("x" * (comet.MAX_MESSAGE_LENGTH + 1)) is None
+
+
 def test_socket_close_is_idempotent():
     socket_app = load_module("socket_app", "socket_chat/application.py")
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
@@ -50,5 +60,55 @@ def test_socket_message_broadcasts_body_only():
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
 
     handler.on_message('{"body": "hello"}')
+
+    assert client.messages == ["hello"]
+
+
+def test_socket_message_validation_closes_invalid_frames():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+
+    class Client:
+        def __init__(self):
+            self.messages = []
+
+        def write_message(self, message):
+            self.messages.append(message)
+
+    for frame in (
+        "not-json",
+        "[]",
+        "{}",
+        '{"body": 123}',
+        '{"body": ""}',
+        '{"body": "   "}',
+        '{"body": "%s"}' % ("x" * (socket_app.MAX_MESSAGE_LENGTH + 1)),
+    ):
+        client = Client()
+        handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+        closed = []
+        handler.close = lambda code=None, reason=None: closed.append((code, reason))
+        socket_app.MessageHandler.callbacks = {client}
+
+        handler.on_message(frame)
+
+        assert client.messages == []
+        assert closed == [(1003, "Invalid chat message")]
+
+
+def test_socket_message_validation_trims_body_before_broadcast():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+
+    class Client:
+        def __init__(self):
+            self.messages = []
+
+        def write_message(self, message):
+            self.messages.append(message)
+
+    client = Client()
+    socket_app.MessageHandler.callbacks = {client}
+    handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+
+    handler.on_message('{"body": "  hello  "}')
 
     assert client.messages == ["hello"]

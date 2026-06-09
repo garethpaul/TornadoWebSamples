@@ -6,6 +6,18 @@ from tornado import autoreload
 import json
 
 
+MAX_MESSAGE_LENGTH = 500
+
+
+def normalize_message(message):
+    if not isinstance(message, str):
+        return None
+    message = message.strip()
+    if not message or len(message) > MAX_MESSAGE_LENGTH:
+        return None
+    return message
+
+
 class Messages(object):
     """
     This is a pretty straight forward messages class that will handle the
@@ -46,8 +58,8 @@ class MessageHandler(tornado.web.RequestHandler):
         """
         Post a message here
         """
-        message = self.get_argument('message')
-        if not message:
+        message = normalize_message(self.get_argument('message', ''))
+        if message is None:
             self.set_status(400)
             return
 

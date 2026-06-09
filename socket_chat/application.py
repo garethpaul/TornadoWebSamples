@@ -7,6 +7,18 @@ import tornado.escape
 from tornado import autoreload
 
 
+MAX_MESSAGE_LENGTH = 500
+
+
+def normalize_message(message):
+    if not isinstance(message, str):
+        return None
+    message = message.strip()
+    if not message or len(message) > MAX_MESSAGE_LENGTH:
+        return None
+    return message
+
+
 class MessageHandler(tornado.websocket.WebSocketHandler):
 
     callbacks = set()
@@ -24,9 +36,20 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         """
         Message received
         """
-        parsed = tornado.escape.json_decode(message)
-        for cb in self.callbacks:
-            cb.write_message(parsed['body'])
+        try:
+            parsed = tornado.escape.json_decode(message)
+        except ValueError:
+            self.close(code=1003, reason='Invalid chat message')
+            return
+
+        body = parsed.get('body') if isinstance(parsed, dict) else None
+        body = normalize_message(body)
+        if body is None:
+            self.close(code=1003, reason='Invalid chat message')
+            return
+
+        for cb in list(self.callbacks):
+            cb.write_message(body)
 
 
 class MainHandler(tornado.web.RequestHandler):

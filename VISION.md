@@ -18,6 +18,7 @@ Priority:
 - Keep setup and quick-start instructions simple
 - Treat in-memory message state as demo-only
 - Keep browser message rendering escaped by default
+- Keep chat message input bounded and validated before broadcasting
 - Keep completed maintenance plans under `docs/plans`
 - Avoid implying production chat readiness
 
@@ -25,7 +26,7 @@ Next priorities:
 
 - Document supported Python and Tornado versions
 - Add small tests for message broadcast behavior
-- Add input escaping and validation notes
+- Add separate input validation notes for comet and WebSocket demos
 - Separate long-polling and WebSocket caveats in the README
 
 Contribution rules:
