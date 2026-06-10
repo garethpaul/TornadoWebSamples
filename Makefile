@@ -14,3 +14,4 @@ build: lint
 verify: lint test build
 
 check: verify
+	$(PYTHON) -m pip_audit --local

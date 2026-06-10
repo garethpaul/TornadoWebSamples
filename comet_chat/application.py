@@ -1,3 +1,4 @@
+import asyncio
 import tornado.web
 import tornado.httpserver
 import tornado.ioloop
@@ -5,9 +6,11 @@ import tornado.options
 from tornado import autoreload
 import json
 import logging
+from pathlib import Path
 
 
 MAX_MESSAGE_LENGTH = 500
+BASE_DIR = Path(__file__).resolve().parent
 logger = logging.getLogger(__name__)
 
 
@@ -60,14 +63,31 @@ class Messages(object):
 
 class MessageHandler(tornado.web.RequestHandler):
 
-    @tornado.web.asynchronous
-    def get(self, *args, **kwargs):
+    async def get(self, *args, **kwargs):
         """
         Get the latest messages
         """
-        self._message_callback = self.async_callback(self.on_message)
+        message_future = asyncio.get_running_loop().create_future()
+        self._message_future = message_future
+
+        def receive_message(message):
+            if not message_future.done():
+                message_future.set_result(message)
+
+        self._message_callback = receive_message
         self.application.chat_messages.register_callback(
             self._message_callback)
+        try:
+            message = await message_future
+        except asyncio.CancelledError:
+            return
+        finally:
+            self.application.chat_messages.remove_callback(
+                self._message_callback)
+            self._message_callback = None
+            self._message_future = None
+
+        self.on_message(message)
 
     def on_connection_close(self):
         """
@@ -77,6 +97,9 @@ class MessageHandler(tornado.web.RequestHandler):
         if callback is not None:
             self.application.chat_messages.remove_callback(callback)
             self._message_callback = None
+        message_future = getattr(self, '_message_future', None)
+        if message_future is not None and not message_future.done():
+            message_future.cancel()
 
     def post(self, *args, **kwargs):
         """
@@ -123,8 +146,8 @@ class Application(tornado.web.Application):
 
         # app settings
         settings = {
-            'template_path' : 'templates',
-            'static_path' : 'static',
+            'template_path' : str(BASE_DIR / 'templates'),
+            'static_path' : str(BASE_DIR / 'static'),
         }
         tornado.web.Application.__init__(self, handlers, **settings)
 
@@ -133,7 +156,6 @@ if __name__ == '__main__':
     tornado.options.parse_command_line()
     app = Application()
     http_server = tornado.httpserver.HTTPServer(app)
-    http_server.listen(8000)
-    ioloop = tornado.ioloop.IOLoop.instance()
-    autoreload.start(ioloop)
-    ioloop.start()
+    http_server.listen(8000, address='127.0.0.1')
+    autoreload.start()
+    tornado.ioloop.IOLoop.current().start()

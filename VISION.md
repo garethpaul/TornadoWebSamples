@@ -28,6 +28,10 @@ Priority:
 - Keep browser clients on same-origin chat endpoints and HTTPS external assets
 - Keep WebSocket origin checks restricted to the same host
 - Keep completed maintenance plans under `docs/plans`
+- Keep GitHub Actions aligned with the local `make check` baseline
+- Keep the chat tutorials running on maintained Tornado and Python releases
+- Keep runtime and verification dependencies pinned and audited
+- Keep unauthenticated sample servers bound to loopback by default
 - Avoid implying production chat readiness
 
 Next priorities:

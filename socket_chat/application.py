@@ -6,9 +6,11 @@ import tornado.websocket
 import tornado.escape
 from tornado import autoreload
 import logging
+from pathlib import Path
 
 
 MAX_MESSAGE_LENGTH = 500
+BASE_DIR = Path(__file__).resolve().parent
 logger = logging.getLogger(__name__)
 
 
@@ -94,8 +96,8 @@ class Application(tornado.web.Application):
 
         # app settings
         settings = {
-            'template_path' : 'templates',
-            'static_path' : 'static',
+            'template_path' : str(BASE_DIR / 'templates'),
+            'static_path' : str(BASE_DIR / 'static'),
             }
         tornado.web.Application.__init__(self, handlers, **settings)
 
@@ -104,7 +106,6 @@ if __name__ == '__main__':
     tornado.options.parse_command_line()
     app = Application()
     http_server = tornado.httpserver.HTTPServer(app)
-    http_server.listen(8000)
-    ioloop = tornado.ioloop.IOLoop.instance()
-    autoreload.start(ioloop)
-    ioloop.start()
+    http_server.listen(8000, address='127.0.0.1')
+    autoreload.start()
+    tornado.ioloop.IOLoop.current().start()

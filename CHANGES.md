@@ -1,5 +1,17 @@
 # Changes
 
+## 2026-06-10
+
+- Upgraded the samples from Tornado 4 to Tornado 6.5.6 and replaced removed
+  comet async APIs with an awaitable long-poll future.
+- Anchored template and static paths to each sample directory and added a real
+  in-process HTTP regression test.
+- Restricted both unauthenticated tutorial servers to loopback by default.
+- Pinned and audited runtime/test dependencies, including pip 26.1.2 for
+  `PYSEC-2026-196` remediation.
+- Added a least-privilege GitHub Actions matrix for Python 3.10, 3.12, and 3.14
+  using commit-pinned Node 24 actions.
+
 ## 2026-06-09
 
 - Isolated WebSocket callback delivery exceptions so one failed client does not

@@ -37,7 +37,7 @@ Additional scan context:
 ### Prerequisites
 
 - Git
-- Python 3
+- Python 3.10 or newer; CI verifies Python 3.10, 3.12, and 3.14
 
 ### Setup
 
@@ -53,11 +53,17 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - Run either sample with Python after installing requirements:
   `python3 comet_chat/application.py` or `python3 socket_chat/application.py`.
+- Both tutorial servers bind to `127.0.0.1:8000` by default so the
+  unauthenticated chat endpoint is not exposed to the local network.
+- Tornado is pinned to 6.5.6. Template and static asset paths are resolved from
+  each sample directory, so either command can be launched from another
+  working directory.
 
 ## Testing and Verification
 
-- `make check` runs Python syntax checks, focused chat-handler tests, message
-  validation tests, and static asset checks for browser-side message rendering.
+- `make check` runs Python syntax checks, focused chat-handler tests, a real
+  in-process HTTP long-poll test, message validation tests, static asset checks,
+  and a vulnerability audit of the resolved environment.
 - Static asset checks also keep chat clients on same-origin message endpoints
   and require HTTPS for the shared external reset stylesheet. Template checks
   keep the browser input length hint aligned with the server-side message
@@ -71,6 +77,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   callbacks in the same batch. WebSocket broadcast tests require failed client
   deliveries to be logged, discarded, and isolated from later callbacks.
 - `make check` also requires completed canonical plans under `docs/plans`.
+- GitHub Actions installs the pinned runtime and test requirements, then runs
+  the same `make check` baseline on Python 3.10, 3.12, and 3.14 for pushes,
+  pull requests, and manual runs. The workflow has read-only permissions, a
+  ten-minute timeout, and commit-pinned Node 24 actions.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -109,6 +119,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   callback delivery exception isolation.
 - See `docs/plans/2026-06-09-websocket-callback-exception-isolation.md` for
   WebSocket callback delivery exception isolation.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the Tornado 6 runtime and CI
+  modernization.
 
 ## Contributing
 

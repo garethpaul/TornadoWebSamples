@@ -27,7 +27,15 @@ Helpful reports include:
 - This repository appears to be a public sample, documentation, or utility project. The active security scope is the code and documentation on the default branch.
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
-- No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
+- Runtime and verification dependencies are pinned in `requirements.txt` and
+  `test-requirements.txt`; review version changes together with audit results.
+- Both unauthenticated sample servers bind to `127.0.0.1` by default. Any
+  change that exposes them to other interfaces requires an explicit threat
+  model and deployment warning.
+- GitHub Actions runs the same `make check` baseline as local development with
+  read-only permissions, a ten-minute timeout, and commit-pinned Node 24
+  actions. Keep the workflow limited to local in-process HTTP tests and static
+  checks unless a separate review documents a need for live services.
 
 ## Service and API Notes
 
