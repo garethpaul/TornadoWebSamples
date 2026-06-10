@@ -1,44 +1,55 @@
 (function() {
+  "use strict";
 
-  jQuery(function($) {
-    var getMessages, log, messages;
-    log = function(message) {
-      return typeof console !== "undefined" && console !== null ? console.log(message) : void 0;
-    };
-    messages = $('ul#messages');
-    getMessages = function() {
-      return $.ajax({
-        url: '/message',
-        type: 'get',
-        dataType: 'json',
-        success: function(data) {
-          messages.append($("<li>").text(data.message));
-          return setTimeout(getMessages, 0);
+  var form = document.querySelector("#message-form");
+  var input = document.querySelector("#message");
+  var messages = document.querySelector("#messages");
+
+  function appendMessage(message) {
+    var item = document.createElement("li");
+    item.textContent = message;
+    messages.appendChild(item);
+  }
+
+  function poll() {
+    fetch("/message", {
+      credentials: "same-origin",
+      headers: {Accept: "application/json"}
+    })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error("Message poll failed: " + response.status);
         }
+        return response.json();
+      })
+      .then(function(data) {
+        appendMessage(data.message);
+        setTimeout(poll, 0);
+      })
+      .catch(function(error) {
+        console.error(error);
+        setTimeout(poll, 1000);
       });
-    };
-    setTimeout(getMessages, 200);
-    return $('input#message').keypress(function(e) {
-      var myMessage;
-      if (e.keyCode === 13) {
-        e.preventDefault();
-        myMessage = this.value;
-        return $.ajax({
-          url: '/message',
-          type: 'post',
-          dataType: 'json',
-          data: {
-            message: this.value
-          },
-          success: function(data) {
-            return $('input#message').val('');
-          },
-          error: function(data) {
-            return log(data);
-          }
-        });
-      }
-    });
+  }
+
+  form.addEventListener("submit", function(event) {
+    event.preventDefault();
+    fetch("/message", {
+      method: "POST",
+      body: new FormData(form),
+      credentials: "same-origin",
+      headers: {Accept: "application/json"}
+    })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error("Message send failed: " + response.status);
+        }
+        input.value = "";
+      })
+      .catch(function(error) {
+        console.error(error);
+      });
   });
 
-}).call(this);
+  setTimeout(poll, 200);
+}());

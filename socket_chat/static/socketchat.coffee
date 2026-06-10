@@ -1,28 +1,24 @@
-jQuery ($) ->
+form = document.querySelector '#message-form'
+input = document.querySelector '#message'
+messages = document.querySelector '#messages'
+websocketScheme = if window.location.protocol is 'https:' then 'wss://' else 'ws://'
+websocket = new WebSocket websocketScheme + window.location.host + '/message'
 
-    # simple log
-    log = (message) -> console?.log message
-    error = (message) -> console?.error message
+appendMessage = (message) ->
+    item = document.createElement 'li'
+    item.textContent = message
+    messages.appendChild item
 
-    messages = $ 'ul#messages'
+websocket.addEventListener 'message', (event) ->
+    appendMessage event.data
 
-    messagePath = '/message'
-    websocketScheme = if window.location.protocol is 'https:' then 'wss://' else 'ws://'
-    websocket = new WebSocket "#{websocketScheme}#{window.location.host}#{messagePath}"
+websocket.addEventListener 'error', (event) ->
+    console.error event
 
-    websocket.onmessage = (event) ->
-        log "Receive: #{event.data}"
-        messages.append $("<li>").text event.data
-
-    websocket.onerror = (event) ->
-        error event
-
-    $('input#message').keypress (e) ->
-        if e.keyCode is 13
-            e.preventDefault()
-            log "Sending Message: #{@value}"
-            data =
-                action: 'add'
-                body: @value
-            websocket.send JSON.stringify data
-            @value = ''
+form.addEventListener 'submit', (event) ->
+    event.preventDefault()
+    unless websocket.readyState is WebSocket.OPEN
+        console.error 'WebSocket is not ready'
+        return
+    websocket.send JSON.stringify action: 'add', body: input.value
+    input.value = ''

@@ -1,7 +1,9 @@
 import asyncio
 import importlib.util
 import json
+from http.cookies import SimpleCookie
 from pathlib import Path
+from urllib.parse import urlencode
 
 from tornado.testing import AsyncHTTPTestCase, gen_test
 
@@ -44,3 +46,35 @@ class TestCometApplication(AsyncHTTPTestCase):
 
         assert response.code == 200
         assert b"message" in response.body
+
+    def test_comet_post_rejects_missing_xsrf_token(self):
+        response = self.fetch(
+            "/message",
+            method="POST",
+            body=urlencode({"message": "hello"}),
+            raise_error=False,
+        )
+
+        assert response.code == 403
+
+    def test_comet_post_accepts_rendered_xsrf_token(self):
+        page = self.fetch("/")
+        cookies = SimpleCookie()
+        for header in page.headers.get_list("Set-Cookie"):
+            cookies.load(header)
+        token = cookies["_xsrf"].value
+        received = []
+        self._app.chat_messages.register_callback(received.append)
+
+        response = self.fetch(
+            "/message",
+            method="POST",
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cookie": f"_xsrf={token}",
+            },
+            body=urlencode({"_xsrf": token, "message": "  hello  "}),
+        )
+
+        assert response.code == 200
+        assert received == ["hello"]

@@ -37,7 +37,7 @@ an audited, reproducible dependency set.
 - Fresh isolated dependency installation.
 - `python3 scripts/check_docs_plans.py`
 - `python3 -m pytest -q`
-- `python3 -m pip_audit --local`
+- `python3 -m pip_audit -r requirements.txt`
 - `make check`
 - `git diff --check`
 

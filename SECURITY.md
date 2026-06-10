@@ -32,10 +32,14 @@ Helpful reports include:
 - Both unauthenticated sample servers bind to `127.0.0.1` by default. Any
   change that exposes them to other interfaces requires an explicit threat
   model and deployment warning.
+- Browser templates are self-contained and do not load third-party CDN code.
+  The comet POST requires Tornado's same-origin XSRF token, while the WebSocket
+  endpoint enforces a same-host Origin check.
 - GitHub Actions runs the same `make check` baseline as local development with
-  read-only permissions, a ten-minute timeout, and commit-pinned Node 24
-  actions. Keep the workflow limited to local in-process HTTP tests and static
-  checks unless a separate review documents a need for live services.
+  Ubuntu 24.04, read-only permissions, a ten-minute timeout, concurrency
+  cancellation, and commit-pinned Node 24 actions. Keep the workflow limited
+  to local in-process HTTP tests and static checks unless a separate review
+  documents a need for live services.
 
 ## Service and API Notes
 

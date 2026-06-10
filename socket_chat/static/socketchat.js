@@ -1,37 +1,33 @@
 (function() {
+  "use strict";
 
-  jQuery(function($) {
-    var error, log, messagePath, messages, websocket, websocketScheme;
-    log = function(message) {
-      return typeof console !== "undefined" && console !== null ? console.log(message) : void 0;
-    };
-    error = function(message) {
-      return typeof console !== "undefined" && console !== null ? console.error(message) : void 0;
-    };
-    messages = $('ul#messages');
-    messagePath = '/message';
-    websocketScheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-    websocket = new WebSocket("" + websocketScheme + window.location.host + messagePath);
-    websocket.onmessage = function(event) {
-      log("Receive: " + event.data);
-      return messages.append($("<li>").text(event.data));
-    };
-    websocket.onerror = function(event) {
-      return error(event);
-    };
-    return $('input#message').keypress(function(e) {
-      var data;
-      if (e.keyCode === 13) {
-        e.preventDefault();
-        log("Sending Message: " + this.value);
-        data = {
-          action: 'add',
-          body: this.value
-        };
-        websocket.send(JSON.stringify(data));
-        return this.value = '';
-      }
-    });
+  var form = document.querySelector("#message-form");
+  var input = document.querySelector("#message");
+  var messages = document.querySelector("#messages");
+  var websocketScheme = window.location.protocol === "https:" ? "wss://" : "ws://";
+  var websocket = new WebSocket(websocketScheme + window.location.host + "/message");
+
+  function appendMessage(message) {
+    var item = document.createElement("li");
+    item.textContent = message;
+    messages.appendChild(item);
+  }
+
+  websocket.addEventListener("message", function(event) {
+    appendMessage(event.data);
   });
 
-}).call(this);
+  websocket.addEventListener("error", function(event) {
+    console.error(event);
+  });
+
+  form.addEventListener("submit", function(event) {
+    event.preventDefault();
+    if (websocket.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket is not ready");
+      return;
+    }
+    websocket.send(JSON.stringify({action: "add", body: input.value}));
+    input.value = "";
+  });
+}());

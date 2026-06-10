@@ -2,6 +2,13 @@
 
 ## 2026-06-10
 
+- Removed runtime jQuery 1.7.2 and YUI CDN dependencies from both samples,
+  replacing them with native DOM, Fetch, FormData, and WebSocket clients plus
+  local reset styles.
+- Enabled Tornado XSRF cookies for comet posts and added in-process tests for
+  accepted token-bearing requests and rejected tokenless requests.
+- Scoped dependency auditing to declared runtime requirements, added `pip
+  check`, and fixed CI to Ubuntu 24.04 with concurrency cancellation.
 - Upgraded the samples from Tornado 4 to Tornado 6.5.6 and replaced removed
   comet async APIs with an awaitable long-poll future.
 - Anchored template and static paths to each sample directory and added a real

@@ -8,71 +8,84 @@ def read_asset(relative_path):
     return (ROOT / relative_path).read_text(encoding="utf-8")
 
 
-def test_comet_chat_renders_messages_as_text_nodes():
-    coffee = read_asset("comet_chat/static/cometchat.coffee")
-    javascript = read_asset("comet_chat/static/cometchat.js")
-
-    assert 'messages.append "<li>' not in coffee
-    assert 'li = "<li>' not in coffee
-    assert 'messages.append("<li>"' not in javascript
-    assert 'li = "<li>"' not in javascript
-    assert 'messages.append $("<li>").text data.message' in coffee
-    assert 'messages.append($("<li>").text(data.message))' in javascript
-
-
-def test_socket_chat_renders_messages_as_text_nodes():
-    coffee = read_asset("socket_chat/static/socketchat.coffee")
-    javascript = read_asset("socket_chat/static/socketchat.js")
-
-    assert 'messages.append "<li>' not in coffee
-    assert 'li = "<li>' not in coffee
-    assert 'messages.append("<li>"' not in javascript
-    assert 'li = "<li>"' not in javascript
-    assert "#{message}" not in coffee
-    assert "+ message +" not in javascript
-    assert 'messages.append $("<li>").text event.data' in coffee
-    assert 'messages.append($("<li>").text(event.data))' in javascript
+def test_chat_clients_render_messages_as_text_nodes():
+    for relative_path in (
+        "comet_chat/static/cometchat.coffee",
+        "comet_chat/static/cometchat.js",
+        "socket_chat/static/socketchat.coffee",
+        "socket_chat/static/socketchat.js",
+    ):
+        client = read_asset(relative_path)
+        assert "document.createElement" in client
+        assert ".textContent" in client
+        assert ".innerHTML" not in client
 
 
-def test_socket_chat_reports_browser_errors_to_console():
-    coffee = read_asset("socket_chat/static/socketchat.coffee")
-    javascript = read_asset("socket_chat/static/socketchat.js")
+def test_chat_clients_use_native_browser_apis():
+    comet = read_asset("comet_chat/static/cometchat.js")
+    socket = read_asset("socket_chat/static/socketchat.js")
 
-    assert "console?.error message" in coffee
-    assert "console.error(message)" in javascript
-    assert "console?.erro message" not in coffee
-    assert "console.erro(message)" not in javascript
+    assert 'fetch("/message"' in comet
+    assert "new FormData(form)" in comet
+    assert 'credentials: "same-origin"' in comet
+    assert "new WebSocket(" in socket
+    assert "window.location.host" in socket
+    assert "WebSocket.OPEN" in socket
 
+    for client in (comet, socket):
+        assert "jQuery" not in client
+        assert "$.ajax" not in client
 
-def test_chat_clients_use_same_origin_message_endpoints():
-    comet_coffee = read_asset("comet_chat/static/cometchat.coffee")
-    comet_javascript = read_asset("comet_chat/static/cometchat.js")
-    socket_coffee = read_asset("socket_chat/static/socketchat.coffee")
-    socket_javascript = read_asset("socket_chat/static/socketchat.js")
-
-    assert "url: '/message'" in comet_coffee
-    assert "url: '/message'" in comet_javascript
-    assert "//localhost:8000/message" not in comet_coffee
-    assert "//localhost:8000/message" not in comet_javascript
-    assert "window.location.host" in socket_coffee
-    assert "window.location.host" in socket_javascript
-    assert "ws://localhost:8000/message" not in socket_coffee
-    assert "ws://localhost:8000/message" not in socket_javascript
+    for relative_path in (
+        "comet_chat/static/cometchat.coffee",
+        "socket_chat/static/socketchat.coffee",
+    ):
+        client = read_asset(relative_path)
+        assert "jQuery" not in client
+        assert "$.ajax" not in client
 
 
-def test_templates_use_https_external_stylesheets():
-    comet_template = read_asset("comet_chat/templates/index.html")
-    socket_template = read_asset("socket_chat/templates/index.html")
+def test_chat_clients_report_browser_errors_to_console():
+    comet = read_asset("comet_chat/static/cometchat.js")
+    socket = read_asset("socket_chat/static/socketchat.js")
 
-    for template in (comet_template, socket_template):
-        assert "http://yui.yahooapis.com" not in template
-        assert "https://yui.yahooapis.com/3.5.1/build/cssreset/cssreset-min.css" in template
+    assert "console.error(error)" in comet
+    assert "console.error(event)" in socket
+    assert 'console.error("WebSocket is not ready")' in socket
+
+
+def test_templates_are_self_contained_and_submit_to_same_origin():
+    for sample in ("comet_chat", "socket_chat"):
+        template = read_asset(f"{sample}/templates/index.html")
+        assert "http://" not in template
+        assert "https://" not in template
+        assert "jquery" not in template.lower()
+        assert "yui" not in template.lower()
+        assert 'action="/message"' in template
+        assert 'id="message-form"' in template
+        assert 'name="message"' in template
+
+
+def test_comet_template_includes_tornado_xsrf_token():
+    template = read_asset("comet_chat/templates/index.html")
+
+    assert "{% module xsrf_form_html() %}" in template
 
 
 def test_templates_hint_server_message_length_limit():
-    comet_template = read_asset("comet_chat/templates/index.html")
-    socket_template = read_asset("socket_chat/templates/index.html")
-
-    for template in (comet_template, socket_template):
+    for sample in ("comet_chat", "socket_chat"):
+        template = read_asset(f"{sample}/templates/index.html")
         assert 'id="message"' in template
         assert 'maxlength="500"' in template
+
+
+def test_local_styles_replace_external_reset_stylesheet():
+    for sample, stylesheet in (
+        ("comet_chat", "cometchat.css"),
+        ("socket_chat", "socketchat.css"),
+    ):
+        css = read_asset(f"{sample}/static/{stylesheet}")
+        assert "box-sizing: border-box" in css
+        assert "list-style: none" in css
+        assert "margin: 0" in css
+        assert "padding: 0" in css

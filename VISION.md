@@ -25,12 +25,14 @@ Priority:
 - Keep comet callback dispatch snapshot-based so new waits survive current sends
 - Keep comet callback delivery failures isolated to the failing callback
 - Keep WebSocket callback delivery failures isolated to the failing callback
-- Keep browser clients on same-origin chat endpoints and HTTPS external assets
+- Keep browser clients self-contained on native, same-origin APIs
+- Require XSRF protection for comet message submissions
 - Keep WebSocket origin checks restricted to the same host
 - Keep completed maintenance plans under `docs/plans`
 - Keep GitHub Actions aligned with the local `make check` baseline
 - Keep the chat tutorials running on maintained Tornado and Python releases
 - Keep runtime and verification dependencies pinned and audited
+- Keep dependency verification isolated from ambient Python packages
 - Keep unauthenticated sample servers bound to loopback by default
 - Avoid implying production chat readiness
 

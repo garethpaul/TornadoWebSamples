@@ -10,6 +10,7 @@ COMET_DISPATCH_PLAN = DOCS_PLANS / "2026-06-09-comet-callback-dispatch-snapshot.
 COMET_EXCEPTION_PLAN = DOCS_PLANS / "2026-06-09-comet-callback-exception-isolation.md"
 SOCKET_EXCEPTION_PLAN = DOCS_PLANS / "2026-06-09-websocket-callback-exception-isolation.md"
 CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
+OFFLINE_CLIENT_PLAN = DOCS_PLANS / "2026-06-10-offline-browser-clients.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -26,6 +27,8 @@ def main():
         failures.append("docs/plans/2026-06-09-websocket-callback-exception-isolation.md is missing")
     if not CI_PLAN.exists():
         failures.append("docs/plans/2026-06-10-ci-baseline.md is missing")
+    if not OFFLINE_CLIENT_PLAN.exists():
+        failures.append("docs/plans/2026-06-10-offline-browser-clients.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -43,11 +46,14 @@ def main():
         for phrase in [
             "permissions:\n  contents: read",
             "workflow_dispatch:",
+            "concurrency:",
+            "cancel-in-progress: true",
+            "runs-on: ubuntu-24.04",
             "timeout-minutes: 10",
             "python-version: ['3.10', '3.12', '3.14']",
             "fail-fast: false",
-            "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
-            "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3",
+            "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0",
             "requirements.txt",
             "test-requirements.txt",
             "run: make check",
@@ -85,6 +91,8 @@ def main():
         failures.append("comet Messages.add must log callback delivery failures")
     if "except Exception:" not in comet:
         failures.append("comet Messages.add must isolate callback delivery exceptions")
+    if "'xsrf_cookies' : True" not in comet:
+        failures.append("comet Application must enable Tornado XSRF cookies")
 
     socket = (ROOT / "socket_chat" / "application.py").read_text(encoding="utf-8")
     if "str(BASE_DIR / 'templates')" not in socket or "str(BASE_DIR / 'static')" not in socket:
@@ -107,8 +115,45 @@ def main():
             failures.append(f"test-requirements.txt must pin {requirement}")
 
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-    if "pip_audit --local" not in makefile:
-        failures.append("make check must audit the resolved environment")
+    for contract in (
+        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))",
+        "env -u PYTHONPATH $(PYTHON) -m pip check",
+        'pip_audit -r "$(ROOT)/requirements.txt"',
+    ):
+        if contract not in makefile:
+            failures.append(f"Makefile verification contract is missing: {contract}")
+
+    templates = [
+        (ROOT / "comet_chat" / "templates" / "index.html").read_text(encoding="utf-8"),
+        (ROOT / "socket_chat" / "templates" / "index.html").read_text(encoding="utf-8"),
+    ]
+    for template in templates:
+        if "http://" in template or "https://" in template:
+            failures.append("chat templates must not load third-party network assets")
+        if 'action="/message"' not in template or 'name="message"' not in template:
+            failures.append("chat forms must submit message fields to the same-origin endpoint")
+    if "{% module xsrf_form_html() %}" not in templates[0]:
+        failures.append("comet template must render Tornado's XSRF form token")
+
+    for client_path in (
+        ROOT / "comet_chat" / "static" / "cometchat.coffee",
+        ROOT / "comet_chat" / "static" / "cometchat.js",
+        ROOT / "socket_chat" / "static" / "socketchat.coffee",
+        ROOT / "socket_chat" / "static" / "socketchat.js",
+    ):
+        client = client_path.read_text(encoding="utf-8")
+        if "jQuery" in client or "$.ajax" in client:
+            failures.append(f"{client_path.relative_to(ROOT)} must use native browser APIs")
+        if "document.createElement" not in client or ".textContent" not in client:
+            failures.append(f"{client_path.relative_to(ROOT)} must render messages as text nodes")
+
+    runtime_tests = (ROOT / "tests" / "test_tornado6_runtime.py").read_text(encoding="utf-8")
+    for test_name in (
+        "test_comet_post_rejects_missing_xsrf_token",
+        "test_comet_post_accepts_rendered_xsrf_token",
+    ):
+        if test_name not in runtime_tests:
+            failures.append(f"runtime XSRF coverage is missing: {test_name}")
 
     if failures:
         print("Documentation plan checks failed:", file=sys.stderr)

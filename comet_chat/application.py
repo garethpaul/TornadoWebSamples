@@ -148,6 +148,7 @@ class Application(tornado.web.Application):
         settings = {
             'template_path' : str(BASE_DIR / 'templates'),
             'static_path' : str(BASE_DIR / 'static'),
+            'xsrf_cookies' : True,
         }
         tornado.web.Application.__init__(self, handlers, **settings)
 

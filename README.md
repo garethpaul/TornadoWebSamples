@@ -62,12 +62,14 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - `make check` runs Python syntax checks, focused chat-handler tests, a real
-  in-process HTTP long-poll test, message validation tests, static asset checks,
-  and a vulnerability audit of the resolved environment.
-- Static asset checks also keep chat clients on same-origin message endpoints
-  and require HTTPS for the shared external reset stylesheet. Template checks
-  keep the browser input length hint aligned with the server-side message
-  limit.
+  in-process HTTP long-poll and XSRF tests, message validation tests, static
+  asset checks, dependency consistency checks, and a vulnerability audit of
+  the declared runtime dependency graph.
+- Browser clients use native DOM, Fetch, FormData, and WebSocket APIs with no
+  third-party runtime scripts or stylesheets. Static checks keep all endpoints
+  same-origin, render messages through text nodes, and keep browser input
+  length hints aligned with the server-side limit. The comet form submits
+  Tornado's XSRF token, and tokenless posts are rejected.
 - Handler tests require WebSocket origin checks to accept only the same host and
   comet long-poll callback queues to stay isolated per message store. They also
   require abandoned comet long-poll callbacks to be removed when a connection
@@ -79,8 +81,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check` also requires completed canonical plans under `docs/plans`.
 - GitHub Actions installs the pinned runtime and test requirements, then runs
   the same `make check` baseline on Python 3.10, 3.12, and 3.14 for pushes,
-  pull requests, and manual runs. The workflow has read-only permissions, a
-  ten-minute timeout, and commit-pinned Node 24 actions.
+  pull requests, and manual runs. The workflow uses Ubuntu 24.04, read-only
+  permissions, a ten-minute timeout, concurrency cancellation, and
+  commit-pinned Node 24 actions.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -94,6 +97,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include comet_chat/application.py, comet_chat/static/cometchat.js, socket_chat/static/socketchat.js.
 - Browser chat clients should use same-origin message endpoints rather than
   hard-coded localhost URLs.
+- Browser templates must remain self-contained instead of loading third-party
+  CDN scripts or stylesheets.
 
 ## Maintenance Notes
 
@@ -103,6 +108,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   canonical Tornado chat sample baseline.
 - See `docs/plans/2026-06-08-message-validation.md` for chat message input
   validation coverage.
+- See `docs/plans/2026-06-10-offline-browser-clients.md` for native browser
+  clients and comet XSRF enforcement.
 - See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and
   external asset URL coverage.
 - See `docs/plans/2026-06-09-websocket-origin-check.md` for same-host
