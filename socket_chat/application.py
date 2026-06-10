@@ -24,9 +24,6 @@ def normalize_message(message):
 
 
 class MessageHandler(tornado.websocket.WebSocketHandler):
-
-    callbacks = set()
-
     def check_origin(self, origin):
         host = self.request.headers.get('Host')
         if not origin or not host:
@@ -40,13 +37,13 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         )
 
     def open(self):
-        self.callbacks.add(self)
+        self.application.chat_clients.add(self)
 
     def on_close(self):
         """
         Post a message here
         """
-        self.callbacks.discard(self)
+        self.application.chat_clients.discard(self)
 
     def on_message(self, message):
         """
@@ -64,12 +61,12 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
             self.close(code=1003, reason='Invalid chat message')
             return
 
-        for cb in list(self.callbacks):
+        for cb in list(self.application.chat_clients):
             try:
                 cb.write_message(body)
             except Exception:
                 logger.exception("Could not deliver websocket chat message")
-                self.callbacks.discard(cb)
+                self.application.chat_clients.discard(cb)
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -88,7 +85,7 @@ class Application(tornado.web.Application):
     """
 
     def __init__(self):
-
+        self.chat_clients = set()
         handlers = [
             (r'/', MainHandler),
             (r'/message', MessageHandler),

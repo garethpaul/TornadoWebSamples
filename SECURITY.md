@@ -34,7 +34,8 @@ Helpful reports include:
   model and deployment warning.
 - Browser templates are self-contained and do not load third-party CDN code.
   The comet POST requires Tornado's same-origin XSRF token, while the WebSocket
-  endpoint enforces a same-host Origin check.
+  endpoint enforces a same-host Origin check. Connected WebSocket clients are
+  scoped to their owning application instance rather than shared globally.
 - GitHub Actions runs the same `make check` baseline as local development with
   Ubuntu 24.04, read-only permissions, a ten-minute timeout, concurrency
   cancellation, and commit-pinned Node 24 actions. Keep the workflow limited

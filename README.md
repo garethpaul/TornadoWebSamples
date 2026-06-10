@@ -70,8 +70,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   same-origin, render messages through text nodes, and keep browser input
   length hints aligned with the server-side limit. The comet form submits
   Tornado's XSRF token, and tokenless posts are rejected.
-- Handler tests require WebSocket origin checks to accept only the same host and
-  comet long-poll callback queues to stay isolated per message store. They also
+- Handler tests require WebSocket origin checks to accept only the same host,
+  WebSocket client registries to stay isolated per application, and comet
+  long-poll callback queues to stay isolated per message store. They also
   require abandoned comet long-poll callbacks to be removed when a connection
   closes. Comet dispatch tests require callback queues to be snapshot and
   cleared before firing so callbacks registered during dispatch wait for the
@@ -126,6 +127,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   callback delivery exception isolation.
 - See `docs/plans/2026-06-09-websocket-callback-exception-isolation.md` for
   WebSocket callback delivery exception isolation.
+- See `docs/plans/2026-06-10-websocket-client-registry.md` for WebSocket client
+  registry ownership and application-isolation coverage.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the Tornado 6 runtime and CI
   modernization.
 

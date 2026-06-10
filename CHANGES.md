@@ -2,6 +2,8 @@
 
 ## 2026-06-10
 
+- Scoped connected WebSocket clients to each application instance so separate
+  sample applications cannot share broadcasts through handler class state.
 - Removed runtime jQuery 1.7.2 and YUI CDN dependencies from both samples,
   replacing them with native DOM, Fetch, FormData, and WebSocket clients plus
   local reset styles.

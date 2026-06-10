@@ -134,12 +134,24 @@ def test_comet_message_normalization_trims_and_bounds_input():
 def test_socket_close_is_idempotent():
     socket_app = load_module("socket_app", "socket_chat/application.py")
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
-    socket_app.MessageHandler.callbacks = set()
+    handler.application = type("Application", (), {"chat_clients": set()})()
 
     handler.on_close()
     handler.on_close()
 
-    assert handler not in socket_app.MessageHandler.callbacks
+    assert handler not in handler.application.chat_clients
+
+
+def test_socket_clients_are_isolated_per_application():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+    first = socket_app.Application()
+    second = socket_app.Application()
+    client = object()
+
+    first.chat_clients.add(client)
+
+    assert first.chat_clients == {client}
+    assert second.chat_clients == set()
 
 
 def test_socket_check_origin_allows_same_host_only():
@@ -167,8 +179,8 @@ def test_socket_message_broadcasts_body_only():
             self.messages.append(message)
 
     client = Client()
-    socket_app.MessageHandler.callbacks = {client}
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.application = type("Application", (), {"chat_clients": {client}})()
 
     handler.on_message('{"body": "hello"}')
 
@@ -205,14 +217,16 @@ def test_socket_message_continues_after_client_write_error():
 
     failing_client = FailingClient()
     client = Client()
-    socket_app.MessageHandler.callbacks = OrderedCallbacks([failing_client, client])
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.application = type("Application", (), {
+        "chat_clients": OrderedCallbacks([failing_client, client]),
+    })()
 
     handler.on_message('{"body": "hello"}')
 
     assert client.messages == ["hello"]
-    assert failing_client not in socket_app.MessageHandler.callbacks
-    assert client in socket_app.MessageHandler.callbacks
+    assert failing_client not in handler.application.chat_clients
+    assert client in handler.application.chat_clients
 
 
 def test_socket_message_validation_closes_invalid_frames():
@@ -238,7 +252,7 @@ def test_socket_message_validation_closes_invalid_frames():
         handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
         closed = []
         handler.close = lambda code=None, reason=None: closed.append((code, reason))
-        socket_app.MessageHandler.callbacks = {client}
+        handler.application = type("Application", (), {"chat_clients": {client}})()
 
         handler.on_message(frame)
 
@@ -257,8 +271,8 @@ def test_socket_message_validation_trims_body_before_broadcast():
             self.messages.append(message)
 
     client = Client()
-    socket_app.MessageHandler.callbacks = {client}
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.application = type("Application", (), {"chat_clients": {client}})()
 
     handler.on_message('{"body": "  hello  "}')
 

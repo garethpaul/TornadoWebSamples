@@ -11,6 +11,7 @@ COMET_EXCEPTION_PLAN = DOCS_PLANS / "2026-06-09-comet-callback-exception-isolati
 SOCKET_EXCEPTION_PLAN = DOCS_PLANS / "2026-06-09-websocket-callback-exception-isolation.md"
 CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
 OFFLINE_CLIENT_PLAN = DOCS_PLANS / "2026-06-10-offline-browser-clients.md"
+SOCKET_REGISTRY_PLAN = DOCS_PLANS / "2026-06-10-websocket-client-registry.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -29,6 +30,8 @@ def main():
         failures.append("docs/plans/2026-06-10-ci-baseline.md is missing")
     if not OFFLINE_CLIENT_PLAN.exists():
         failures.append("docs/plans/2026-06-10-offline-browser-clients.md is missing")
+    if not SOCKET_REGISTRY_PLAN.exists():
+        failures.append("docs/plans/2026-06-10-websocket-client-registry.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -103,8 +106,16 @@ def main():
         failures.append("socket MessageHandler.on_message must log callback delivery failures")
     if "except Exception:" not in socket:
         failures.append("socket MessageHandler.on_message must isolate callback delivery exceptions")
-    if "self.callbacks.discard(cb)" not in socket:
+    if "self.application.chat_clients.discard(cb)" not in socket:
         failures.append("socket MessageHandler.on_message must discard callbacks that fail delivery")
+    if "self.chat_clients = set()" not in socket:
+        failures.append("socket Application must own its connected client registry")
+    if "callbacks = set()" in socket:
+        failures.append("socket clients must not be stored on the handler class")
+
+    handler_tests = (ROOT / "tests" / "test_chat_handlers.py").read_text(encoding="utf-8")
+    if "test_socket_clients_are_isolated_per_application" not in handler_tests:
+        failures.append("socket application client-registry isolation coverage is missing")
 
     requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     if "tornado==6.5.6" not in requirements:
