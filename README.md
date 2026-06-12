@@ -71,6 +71,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   callbacks in the same batch. WebSocket broadcast tests require failed client
   deliveries to be logged, discarded, and isolated from later callbacks.
 - `make check` also requires completed canonical plans under `docs/plans`.
+GitHub Actions installs the documented runtime and test requirements, then runs
+the same `make check` baseline on pushes and pull requests.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -109,6 +111,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
   callback delivery exception isolation.
 - See `docs/plans/2026-06-09-websocket-callback-exception-isolation.md` for
   WebSocket callback delivery exception isolation.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.
 
 ## Contributing
 

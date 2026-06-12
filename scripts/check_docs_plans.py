@@ -9,6 +9,8 @@ CANONICAL_PLAN = DOCS_PLANS / "2026-06-08-tornado-web-samples-baseline.md"
 COMET_DISPATCH_PLAN = DOCS_PLANS / "2026-06-09-comet-callback-dispatch-snapshot.md"
 COMET_EXCEPTION_PLAN = DOCS_PLANS / "2026-06-09-comet-callback-exception-isolation.md"
 SOCKET_EXCEPTION_PLAN = DOCS_PLANS / "2026-06-09-websocket-callback-exception-isolation.md"
+CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
+CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
 def main():
@@ -22,6 +24,10 @@ def main():
         failures.append("docs/plans/2026-06-09-comet-callback-exception-isolation.md is missing")
     if not SOCKET_EXCEPTION_PLAN.exists():
         failures.append("docs/plans/2026-06-09-websocket-callback-exception-isolation.md is missing")
+    if not CI_PLAN.exists():
+        failures.append("docs/plans/2026-06-10-ci-baseline.md is missing")
+    if not CI_WORKFLOW.exists():
+        failures.append(".github/workflows/check.yml is missing")
 
     plans = sorted(DOCS_PLANS.glob("*.md")) if DOCS_PLANS.exists() else []
     if not plans:
@@ -31,6 +37,25 @@ def main():
         plan = plan_path.read_text(encoding="utf-8")
         if "Status: Completed" not in plan or "make check" not in plan:
             failures.append(f"{plan_path.relative_to(ROOT)} must record completed status and make check verification")
+
+    if CI_WORKFLOW.exists():
+        workflow = CI_WORKFLOW.read_text(encoding="utf-8")
+        for phrase in [
+            "actions/setup-python@v5",
+            'python-version: "3.9"',
+            "requirements.txt",
+            "test-requirements.txt",
+            "make check",
+        ]:
+            if phrase not in workflow:
+                failures.append(f".github/workflows/check.yml must include {phrase}")
+
+    docs = "\n".join(
+        (ROOT / path).read_text(encoding="utf-8")
+        for path in ["README.md", "VISION.md", "SECURITY.md"]
+    )
+    if "GitHub Actions" not in docs:
+        failures.append("project docs must mention the GitHub Actions baseline")
 
     comet = (ROOT / "comet_chat" / "application.py").read_text(encoding="utf-8")
     if "def remove_callback(self, callback):" not in comet:

@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-10
+
+- Added a GitHub Actions workflow that installs the documented Tornado runtime
+  and test requirements, then runs the local `make check` baseline.
+
 ## 2026-06-09
 
 - Isolated WebSocket callback delivery exceptions so one failed client does not

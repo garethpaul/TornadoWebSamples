@@ -28,6 +28,9 @@ Helpful reports include:
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
+- GitHub Actions runs the same `make check` baseline as local development. Keep
+  the workflow limited to no-network tests and static checks unless a separate
+  review documents a need for live services.
 
 ## Service and API Notes
 
