@@ -1,32 +1,40 @@
-jQuery ($) ->
+form = document.querySelector '#message-form'
+input = document.querySelector '#message'
+messages = document.querySelector '#messages'
 
-    # simple log
-    log = (message) -> console?.log message
+appendMessage = (message) ->
+    item = document.createElement 'li'
+    item.textContent = message
+    messages.appendChild item
 
-    messages = $ 'ul#messages'
+poll = ->
+    fetch('/message',
+        credentials: 'same-origin'
+        headers:
+            Accept: 'application/json'
+    ).then((response) ->
+        throw new Error "Message poll failed: #{response.status}" unless response.ok
+        response.json()
+    ).then((data) ->
+        appendMessage data.message
+        setTimeout poll, 0
+    ).catch((error) ->
+        console.error error
+        setTimeout poll, 1000
+    )
 
-    getMessages = ->
-        $.ajax
-            url: '/message'
-            type: 'get'
-            dataType: 'json'
-            success: (data) ->
-                messages.append $("<li>").text data.message
-                setTimeout getMessages, 0 # this send the app into comet mode
+form.addEventListener 'submit', (event) ->
+    event.preventDefault()
+    fetch('/message',
+        method: 'POST'
+        body: new FormData(form)
+        credentials: 'same-origin'
+        headers:
+            Accept: 'application/json'
+    ).then((response) ->
+        throw new Error "Message send failed: #{response.status}" unless response.ok
+        input.value = ''
+    ).catch (error) ->
+        console.error error
 
-    setTimeout getMessages, 200
-
-    $('input#message').keypress (e) ->
-        if e.keyCode is 13
-            e.preventDefault()
-            myMessage = @value
-            $.ajax
-                url: '/message'
-                type: 'post'
-                dataType: 'json'
-                data:
-                    message: @value
-                success: (data) ->
-                    $('input#message').val ''
-                error: (data) ->
-                    log data
+setTimeout poll, 200

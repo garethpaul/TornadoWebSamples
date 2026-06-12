@@ -1,0 +1,80 @@
+import asyncio
+import importlib.util
+import json
+from http.cookies import SimpleCookie
+from pathlib import Path
+from urllib.parse import urlencode
+
+from tornado.testing import AsyncHTTPTestCase, gen_test
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_module(name, relative_path):
+    spec = importlib.util.spec_from_file_location(name, ROOT / relative_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class TestCometApplication(AsyncHTTPTestCase):
+    def get_app(self):
+        self.comet = load_module("comet_runtime_app", "comet_chat/application.py")
+        return self.comet.Application()
+
+    @gen_test
+    async def test_long_poll_delivers_message_on_tornado_6(self):
+        response_future = self.http_client.fetch(self.get_url("/message"))
+
+        for _ in range(100):
+            if self._app.chat_messages.callbacks:
+                break
+            await asyncio.sleep(0.01)
+
+        assert self._app.chat_messages.callbacks
+
+        self._app.chat_messages.add("hello")
+        response = await response_future
+
+        assert response.code == 200
+        assert json.loads(response.body) == {"message": "hello"}
+        assert self._app.chat_messages.callbacks == []
+
+    def test_template_paths_are_independent_of_working_directory(self):
+        response = self.fetch("/")
+
+        assert response.code == 200
+        assert b"message" in response.body
+
+    def test_comet_post_rejects_missing_xsrf_token(self):
+        response = self.fetch(
+            "/message",
+            method="POST",
+            body=urlencode({"message": "hello"}),
+            raise_error=False,
+        )
+
+        assert response.code == 403
+
+    def test_comet_post_accepts_rendered_xsrf_token(self):
+        page = self.fetch("/")
+        cookies = SimpleCookie()
+        for header in page.headers.get_list("Set-Cookie"):
+            cookies.load(header)
+        token = cookies["_xsrf"].value
+        received = []
+        self._app.chat_messages.register_callback(received.append)
+
+        response = self.fetch(
+            "/message",
+            method="POST",
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cookie": f"_xsrf={token}",
+            },
+            body=urlencode({"_xsrf": token, "message": "  hello  "}),
+        )
+
+        assert response.code == 200
+        assert received == ["hello"]

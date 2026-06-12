@@ -1,6 +1,11 @@
+* {
+  box-sizing: border-box;
+}
 html,
 body {
   height: 100%;
+  margin: 0;
+  padding: 0;
 }
 body {
   font-family: Arial, sans-serif;
@@ -14,6 +19,9 @@ body {
   overflow: auto;
 }
 #room ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   position: absolute;
   bottom: 0;
 }

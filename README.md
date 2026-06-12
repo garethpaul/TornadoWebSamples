@@ -37,7 +37,7 @@ Additional scan context:
 ### Prerequisites
 
 - Git
-- Python 3
+- Python 3.10 or newer; CI verifies Python 3.10, 3.12, and 3.14
 
 ### Setup
 
@@ -53,17 +53,26 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - Run either sample with Python after installing requirements:
   `python3 comet_chat/application.py` or `python3 socket_chat/application.py`.
+- Both tutorial servers bind to `127.0.0.1:8000` by default so the
+  unauthenticated chat endpoint is not exposed to the local network.
+- Tornado is pinned to 6.5.6. Template and static asset paths are resolved from
+  each sample directory, so either command can be launched from another
+  working directory.
 
 ## Testing and Verification
 
-- `make check` runs Python syntax checks, focused chat-handler tests, message
-  validation tests, and static asset checks for browser-side message rendering.
-- Static asset checks also keep chat clients on same-origin message endpoints
-  and require HTTPS for the shared external reset stylesheet. Template checks
-  keep the browser input length hint aligned with the server-side message
-  limit.
-- Handler tests require WebSocket origin checks to accept only the same host and
-  comet long-poll callback queues to stay isolated per message store. They also
+- `make check` runs Python syntax checks, focused chat-handler tests, a real
+  in-process HTTP long-poll and XSRF tests, message validation tests, static
+  asset checks, dependency consistency checks, and a vulnerability audit of
+  the declared runtime dependency graph.
+- Browser clients use native DOM, Fetch, FormData, and WebSocket APIs with no
+  third-party runtime scripts or stylesheets. Static checks keep all endpoints
+  same-origin, render messages through text nodes, and keep browser input
+  length hints aligned with the server-side limit. The comet form submits
+  Tornado's XSRF token, and tokenless posts are rejected.
+- Handler tests require WebSocket origin checks to accept only the same host,
+  WebSocket client registries to stay isolated per application, and comet
+  long-poll callback queues to stay isolated per message store. They also
   require abandoned comet long-poll callbacks to be removed when a connection
   closes. Comet dispatch tests require callback queues to be snapshot and
   cleared before firing so callbacks registered during dispatch wait for the
@@ -71,8 +80,13 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   callbacks in the same batch. WebSocket broadcast tests require failed client
   deliveries to be logged, discarded, and isolated from later callbacks.
 - `make check` also requires completed canonical plans under `docs/plans`.
-GitHub Actions installs the documented runtime and test requirements, then runs
-the same `make check` baseline on pushes and pull requests.
+- GitHub Actions installs the pinned runtime and test requirements, then runs
+  the same `make check` baseline on Python 3.10, 3.12, and 3.14 for pushes,
+  pull requests, and manual runs. The workflow uses Ubuntu 24.04, read-only
+  permissions, credential-free checkout, a ten-minute timeout, concurrency
+  cancellation, and commit-pinned Node 24 actions. Dependency-free mutation
+  tests reject contradictory or relocated credential settings and other
+  workflow policy regressions.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -86,6 +100,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include comet_chat/application.py, comet_chat/static/cometchat.js, socket_chat/static/socketchat.js.
 - Browser chat clients should use same-origin message endpoints rather than
   hard-coded localhost URLs.
+- Browser templates must remain self-contained instead of loading third-party
+  CDN scripts or stylesheets.
 
 ## Maintenance Notes
 
@@ -95,6 +111,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   canonical Tornado chat sample baseline.
 - See `docs/plans/2026-06-08-message-validation.md` for chat message input
   validation coverage.
+- See `docs/plans/2026-06-10-offline-browser-clients.md` for native browser
+  clients and comet XSRF enforcement.
 - See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and
   external asset URL coverage.
 - See `docs/plans/2026-06-09-websocket-origin-check.md` for same-host
@@ -111,7 +129,10 @@ When the required SDK or runtime is unavailable, use static checks and source re
   callback delivery exception isolation.
 - See `docs/plans/2026-06-09-websocket-callback-exception-isolation.md` for
   WebSocket callback delivery exception isolation.
-- See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.
+- See `docs/plans/2026-06-10-websocket-client-registry.md` for WebSocket client
+  registry ownership and application-isolation coverage.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the Tornado 6 runtime and CI
+  modernization.
 
 ## Contributing
 

@@ -6,9 +6,11 @@ import tornado.websocket
 import tornado.escape
 from tornado import autoreload
 import logging
+from pathlib import Path
 
 
 MAX_MESSAGE_LENGTH = 500
+BASE_DIR = Path(__file__).resolve().parent
 logger = logging.getLogger(__name__)
 
 
@@ -22,9 +24,6 @@ def normalize_message(message):
 
 
 class MessageHandler(tornado.websocket.WebSocketHandler):
-
-    callbacks = set()
-
     def check_origin(self, origin):
         host = self.request.headers.get('Host')
         if not origin or not host:
@@ -38,13 +37,13 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         )
 
     def open(self):
-        self.callbacks.add(self)
+        self.application.chat_clients.add(self)
 
     def on_close(self):
         """
         Post a message here
         """
-        self.callbacks.discard(self)
+        self.application.chat_clients.discard(self)
 
     def on_message(self, message):
         """
@@ -62,12 +61,12 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
             self.close(code=1003, reason='Invalid chat message')
             return
 
-        for cb in list(self.callbacks):
+        for cb in list(self.application.chat_clients):
             try:
                 cb.write_message(body)
             except Exception:
                 logger.exception("Could not deliver websocket chat message")
-                self.callbacks.discard(cb)
+                self.application.chat_clients.discard(cb)
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -86,7 +85,7 @@ class Application(tornado.web.Application):
     """
 
     def __init__(self):
-
+        self.chat_clients = set()
         handlers = [
             (r'/', MainHandler),
             (r'/message', MessageHandler),
@@ -94,8 +93,8 @@ class Application(tornado.web.Application):
 
         # app settings
         settings = {
-            'template_path' : 'templates',
-            'static_path' : 'static',
+            'template_path' : str(BASE_DIR / 'templates'),
+            'static_path' : str(BASE_DIR / 'static'),
             }
         tornado.web.Application.__init__(self, handlers, **settings)
 
@@ -104,7 +103,6 @@ if __name__ == '__main__':
     tornado.options.parse_command_line()
     app = Application()
     http_server = tornado.httpserver.HTTPServer(app)
-    http_server.listen(8000)
-    ioloop = tornado.ioloop.IOLoop.instance()
-    autoreload.start(ioloop)
-    ioloop.start()
+    http_server.listen(8000, address='127.0.0.1')
+    autoreload.start()
+    tornado.ioloop.IOLoop.current().start()

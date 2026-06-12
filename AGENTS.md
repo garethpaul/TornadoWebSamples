@@ -17,10 +17,11 @@
 
 ## Development commands
 
-- Install dependencies: `python3 -m pip install -r requirements.txt`
+- Install dependencies: `python3 -m pip install -r requirements.txt -r test-requirements.txt`
 - Full baseline: `make check`
 - Combined verification: `make verify`
 - Lint/static checks: `make lint`
+- Workflow contract mutations: `make contract-test`
 - Tests: `make test`
 - Build: `make build`
 - If a command above skips because a platform toolchain is missing, verify on a machine with that SDK before claiming platform behavior is tested.
@@ -28,13 +29,16 @@
 ## Coding conventions
 
 - Language mix noted in the README: JavaScript (2), Python (2).
-- Prefer dependency-free tests or stdlib checks when legacy packages are unavailable.
+- Prefer dependency-free tests or stdlib checks when optional packages are unavailable.
 
 ## Testing guidance
 
-- Test-related files detected: `test-requirements.txt`, `tests/`, `tests/test_chat_handlers.py`, `tests/test_static_assets.py`
+- Test-related files detected: `test-requirements.txt`, `tests/`, `tests/test_chat_handlers.py`, `tests/test_static_assets.py`, `tests/test_tornado6_runtime.py`
 - Start with the narrowest relevant test or Make target, then run `make check` before handing off if the change is not documentation-only.
 - Keep README verification notes in sync when commands, fixtures, or supported toolchains change.
+- Keep hosted verification read-only and credential-free with immutable action
+  pins; update the structural workflow mutations with any intentional policy
+  change.
 
 ## PR / change guidance
 

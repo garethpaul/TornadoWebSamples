@@ -2,8 +2,26 @@
 
 ## 2026-06-10
 
-- Added a GitHub Actions workflow that installs the documented Tornado runtime
-  and test requirements, then runs the local `make check` baseline.
+- Scoped connected WebSocket clients to each application instance so separate
+  sample applications cannot share broadcasts through handler class state.
+- Removed runtime jQuery 1.7.2 and YUI CDN dependencies from both samples,
+  replacing them with native DOM, Fetch, FormData, and WebSocket clients plus
+  local reset styles.
+- Enabled Tornado XSRF cookies for comet posts and added in-process tests for
+  accepted token-bearing requests and rejected tokenless requests.
+- Scoped dependency auditing to declared runtime requirements, added `pip
+  check`, and fixed CI to Ubuntu 24.04 with concurrency cancellation.
+- Upgraded the samples from Tornado 4 to Tornado 6.5.6 and replaced removed
+  comet async APIs with an awaitable long-poll future.
+- Anchored template and static paths to each sample directory and added a real
+  in-process HTTP regression test.
+- Restricted both unauthenticated tutorial servers to loopback by default.
+- Pinned and audited runtime/test dependencies, including pip 26.1.2 for
+  `PYSEC-2026-196` remediation.
+- Added a least-privilege GitHub Actions matrix for Python 3.10, 3.12, and 3.14
+  using commit-pinned Node 24 actions and credential-free checkout.
+- Added dependency-free structural workflow tests that reject contradictory or
+  relocated credential settings and other CI policy regressions.
 
 ## 2026-06-09
 

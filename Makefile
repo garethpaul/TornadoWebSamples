@@ -1,16 +1,22 @@
-.PHONY: build check lint test verify
+.PHONY: build check contract-test lint test verify
 
+ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PYTHON ?= python3
 
 lint:
-	$(PYTHON) -m py_compile comet_chat/application.py socket_chat/application.py
-	$(PYTHON) scripts/check_docs_plans.py
+	$(PYTHON) -m py_compile "$(ROOT)/comet_chat/application.py" "$(ROOT)/socket_chat/application.py"
+	$(PYTHON) "$(ROOT)/scripts/check_docs_plans.py"
 
 test:
-	$(PYTHON) -m pytest -q
+	cd "$(ROOT)" && $(PYTHON) -m pytest -q
+
+contract-test:
+	$(PYTHON) "$(ROOT)/scripts/test_workflow_contract.py"
 
 build: lint
 
-verify: lint test build
+verify: lint contract-test test build
 
 check: verify
+	env -u PYTHONPATH $(PYTHON) -m pip check
+	env -u PYTHONPATH $(PYTHON) -m pip_audit -r "$(ROOT)/requirements.txt"
