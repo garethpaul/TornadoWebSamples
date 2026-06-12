@@ -14,6 +14,7 @@ SOCKET_EXCEPTION_PLAN = DOCS_PLANS / "2026-06-09-websocket-callback-exception-is
 CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
 OFFLINE_CLIENT_PLAN = DOCS_PLANS / "2026-06-10-offline-browser-clients.md"
 SOCKET_REGISTRY_PLAN = DOCS_PLANS / "2026-06-10-websocket-client-registry.md"
+SOCKET_FRAME_LIMIT_PLAN = DOCS_PLANS / "2026-06-12-websocket-frame-limit.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -34,6 +35,8 @@ def main():
         failures.append("docs/plans/2026-06-10-offline-browser-clients.md is missing")
     if not SOCKET_REGISTRY_PLAN.exists():
         failures.append("docs/plans/2026-06-10-websocket-client-registry.md is missing")
+    if not SOCKET_FRAME_LIMIT_PLAN.exists():
+        failures.append("docs/plans/2026-06-12-websocket-frame-limit.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -101,10 +104,21 @@ def main():
         failures.append("socket Application must own its connected client registry")
     if "callbacks = set()" in socket:
         failures.append("socket clients must not be stored on the handler class")
+    if "MAX_WEBSOCKET_FRAME_SIZE = 4096" not in socket:
+        failures.append("socket Application must define the reviewed WebSocket frame limit")
+    if "'websocket_max_message_size' : MAX_WEBSOCKET_FRAME_SIZE" not in socket:
+        failures.append("socket Application must enforce the WebSocket frame limit before parsing")
 
     handler_tests = (ROOT / "tests" / "test_chat_handlers.py").read_text(encoding="utf-8")
     if "test_socket_clients_are_isolated_per_application" not in handler_tests:
         failures.append("socket application client-registry isolation coverage is missing")
+    for contract in (
+        "test_socket_application_bounds_websocket_frames",
+        'application.settings["websocket_max_message_size"] == 4096',
+        "MAX_WEBSOCKET_FRAME_SIZE > socket_app.MAX_MESSAGE_LENGTH * 4",
+    ):
+        if contract not in handler_tests:
+            failures.append(f"WebSocket frame-limit regression contract is missing: {contract}")
 
     requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     if "tornado==6.5.6" not in requirements:

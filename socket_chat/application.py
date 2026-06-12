@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 MAX_MESSAGE_LENGTH = 500
+MAX_WEBSOCKET_FRAME_SIZE = 4096
 BASE_DIR = Path(__file__).resolve().parent
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,7 @@ class Application(tornado.web.Application):
         settings = {
             'template_path' : str(BASE_DIR / 'templates'),
             'static_path' : str(BASE_DIR / 'static'),
+            'websocket_max_message_size' : MAX_WEBSOCKET_FRAME_SIZE,
             }
         tornado.web.Application.__init__(self, handlers, **settings)
 

@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-12
+
+- Capped WebSocket frames at 4096 bytes before JSON decoding while preserving
+  the existing 500-character chat-body validation.
+
 ## 2026-06-10
 
 - Scoped connected WebSocket clients to each application instance so separate

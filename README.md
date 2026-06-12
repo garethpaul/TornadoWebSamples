@@ -79,6 +79,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   next message. They also require one failed callback delivery not to stop later
   callbacks in the same batch. WebSocket broadcast tests require failed client
   deliveries to be logged, discarded, and isolated from later callbacks.
+  Tornado rejects WebSocket frames larger than 4096 bytes before JSON decoding
+  while retaining the 500-character validated chat-body limit.
 - `make check` also requires completed canonical plans under `docs/plans`.
 - GitHub Actions installs the pinned runtime and test requirements, then runs
   the same `make check` baseline on Python 3.10, 3.12, and 3.14 for pushes,
@@ -113,6 +115,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   validation coverage.
 - See `docs/plans/2026-06-10-offline-browser-clients.md` for native browser
   clients and comet XSRF enforcement.
+- See `docs/plans/2026-06-12-websocket-frame-limit.md` for the protocol-level
+  WebSocket input bound.
 - See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and
   external asset URL coverage.
 - See `docs/plans/2026-06-09-websocket-origin-check.md` for same-host

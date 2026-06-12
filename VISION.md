@@ -29,6 +29,7 @@ Priority:
 - Keep browser clients self-contained on native, same-origin APIs
 - Require XSRF protection for comet message submissions
 - Keep WebSocket origin checks restricted to the same host
+- Bound WebSocket frames before JSON parsing
 - Keep completed maintenance plans under `docs/plans`
 - Keep GitHub Actions aligned with the local `make check` baseline
 - Keep hosted verification read-only, credential-free, pinned, and structurally

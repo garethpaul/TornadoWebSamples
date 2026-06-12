@@ -154,6 +154,15 @@ def test_socket_clients_are_isolated_per_application():
     assert second.chat_clients == set()
 
 
+def test_socket_application_bounds_websocket_frames():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+    application = socket_app.Application()
+
+    assert socket_app.MAX_WEBSOCKET_FRAME_SIZE == 4096
+    assert application.settings["websocket_max_message_size"] == 4096
+    assert socket_app.MAX_WEBSOCKET_FRAME_SIZE > socket_app.MAX_MESSAGE_LENGTH * 4
+
+
 def test_socket_check_origin_allows_same_host_only():
     socket_app = load_module("socket_app", "socket_chat/application.py")
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)

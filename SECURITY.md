@@ -36,6 +36,8 @@ Helpful reports include:
   The comet POST requires Tornado's same-origin XSRF token, while the WebSocket
   endpoint enforces a same-host Origin check. Connected WebSocket clients are
   scoped to their owning application instance rather than shared globally.
+  WebSocket frames are capped at 4096 bytes before JSON parsing, in addition
+  to the 500-character validated chat-body limit.
 - GitHub Actions runs the same `make check` baseline as local development with
   Ubuntu 24.04, read-only permissions, credential-free checkout, a ten-minute
   timeout, concurrency cancellation, and commit-pinned Node 24 actions.
