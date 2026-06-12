@@ -25,6 +25,7 @@ Priority:
 - Keep comet callback dispatch snapshot-based so new waits survive current sends
 - Keep comet callback delivery failures isolated to the failing callback
 - Keep WebSocket callback delivery failures isolated to the failing callback
+- Observe delayed WebSocket delivery failures and remove failed clients
 - Keep connected WebSocket client registries isolated per application
 - Keep browser clients self-contained on native, same-origin APIs
 - Require XSRF protection for comet message submissions

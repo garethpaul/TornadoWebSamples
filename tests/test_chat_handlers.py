@@ -1,3 +1,4 @@
+import asyncio
 import importlib.util
 from pathlib import Path
 
@@ -10,6 +11,31 @@ def load_module(name, relative_path):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+class DeferredDelivery:
+    def __init__(self, error=None):
+        self.callback = None
+        self.error = error
+
+    def add_done_callback(self, callback):
+        self.callback = callback
+
+    def result(self):
+        if self.error is not None:
+            raise self.error
+
+    def finish(self):
+        assert self.callback is not None
+        self.callback(self)
+
+
+class DeferredClient:
+    def __init__(self, error=None):
+        self.delivery = DeferredDelivery(error)
+
+    def write_message(self, message):
+        return self.delivery
 
 
 def test_comet_messages_notify_and_clear_callbacks():
@@ -194,6 +220,48 @@ def test_socket_message_broadcasts_body_only():
     handler.on_message('{"body": "hello"}')
 
     assert client.messages == ["hello"]
+
+
+def test_socket_message_keeps_client_after_async_delivery_succeeds():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+    client = DeferredClient()
+    clients = {client}
+    handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.application = type("Application", (), {"chat_clients": clients})()
+
+    handler.on_message('{"body": "hello"}')
+    client.delivery.finish()
+
+    assert client in clients
+
+
+def test_socket_message_discards_client_after_async_delivery_fails():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+    client = DeferredClient(RuntimeError("stream closed"))
+    clients = {client}
+    handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.application = type("Application", (), {"chat_clients": clients})()
+
+    handler.on_message('{"body": "hello"}')
+
+    assert client in clients
+
+    client.delivery.finish()
+
+    assert client not in clients
+
+
+def test_socket_message_discards_client_after_async_delivery_is_cancelled():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+    client = DeferredClient(asyncio.CancelledError())
+    clients = {client}
+    handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.application = type("Application", (), {"chat_clients": clients})()
+
+    handler.on_message('{"body": "hello"}')
+    client.delivery.finish()
+
+    assert client not in clients
 
 
 def test_socket_message_continues_after_client_write_error():

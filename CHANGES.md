@@ -2,6 +2,8 @@
 
 ## 2026-06-12
 
+- Observed asynchronous WebSocket write failures and removed only the failed
+  client from the application registry.
 - Capped WebSocket frames at 4096 bytes before JSON decoding while preserving
   the existing 500-character chat-body validation.
 

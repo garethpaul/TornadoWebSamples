@@ -1,3 +1,4 @@
+import asyncio
 import tornado.web
 import tornado.httpserver
 import tornado.ioloop
@@ -46,6 +47,13 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         """
         self.application.chat_clients.discard(self)
 
+    def _finish_delivery(self, client, delivery):
+        try:
+            delivery.result()
+        except (asyncio.CancelledError, Exception):
+            logger.exception("Could not deliver websocket chat message")
+            self.application.chat_clients.discard(client)
+
     def on_message(self, message):
         """
         Message received
@@ -64,7 +72,11 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 
         for cb in list(self.application.chat_clients):
             try:
-                cb.write_message(body)
+                delivery = cb.write_message(body)
+                if delivery is not None:
+                    delivery.add_done_callback(
+                        lambda future, client=cb: self._finish_delivery(
+                            client, future))
             except Exception:
                 logger.exception("Could not deliver websocket chat message")
                 self.application.chat_clients.discard(cb)

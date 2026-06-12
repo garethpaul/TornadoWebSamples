@@ -77,8 +77,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   closes. Comet dispatch tests require callback queues to be snapshot and
   cleared before firing so callbacks registered during dispatch wait for the
   next message. They also require one failed callback delivery not to stop later
-  callbacks in the same batch. WebSocket broadcast tests require failed client
-  deliveries to be logged, discarded, and isolated from later callbacks.
+  callbacks in the same batch. WebSocket broadcast tests require synchronous
+  and asynchronous client delivery failures to be observed, logged, discarded,
+  and isolated from later callbacks.
   Tornado rejects WebSocket frames larger than 4096 bytes before JSON decoding
   while retaining the 500-character validated chat-body limit.
 - `make check` also requires completed canonical plans under `docs/plans`.
@@ -117,6 +118,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   clients and comet XSRF enforcement.
 - See `docs/plans/2026-06-12-websocket-frame-limit.md` for the protocol-level
   WebSocket input bound.
+- See `docs/plans/2026-06-12-websocket-async-delivery-failures.md` for delayed
+  WebSocket delivery failure cleanup.
 - See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and
   external asset URL coverage.
 - See `docs/plans/2026-06-09-websocket-origin-check.md` for same-host

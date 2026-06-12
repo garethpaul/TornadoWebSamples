@@ -15,6 +15,7 @@ CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
 OFFLINE_CLIENT_PLAN = DOCS_PLANS / "2026-06-10-offline-browser-clients.md"
 SOCKET_REGISTRY_PLAN = DOCS_PLANS / "2026-06-10-websocket-client-registry.md"
 SOCKET_FRAME_LIMIT_PLAN = DOCS_PLANS / "2026-06-12-websocket-frame-limit.md"
+SOCKET_ASYNC_DELIVERY_PLAN = DOCS_PLANS / "2026-06-12-websocket-async-delivery-failures.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -37,6 +38,8 @@ def main():
         failures.append("docs/plans/2026-06-10-websocket-client-registry.md is missing")
     if not SOCKET_FRAME_LIMIT_PLAN.exists():
         failures.append("docs/plans/2026-06-12-websocket-frame-limit.md is missing")
+    if not SOCKET_ASYNC_DELIVERY_PLAN.exists():
+        failures.append("docs/plans/2026-06-12-websocket-async-delivery-failures.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -108,6 +111,16 @@ def main():
         failures.append("socket Application must define the reviewed WebSocket frame limit")
     if "'websocket_max_message_size' : MAX_WEBSOCKET_FRAME_SIZE" not in socket:
         failures.append("socket Application must enforce the WebSocket frame limit before parsing")
+    if "delivery.add_done_callback(" not in socket:
+        failures.append("socket MessageHandler must observe asynchronous delivery completion")
+    if "delivery.result()" not in socket:
+        failures.append("socket MessageHandler must consume asynchronous delivery failures")
+    if "asyncio.CancelledError" not in socket:
+        failures.append("socket MessageHandler must consume cancelled delivery futures")
+    if "lambda future, client=cb:" not in socket:
+        failures.append("socket MessageHandler must bind each async delivery to its client")
+    if "self.application.chat_clients.discard(client)" not in socket:
+        failures.append("socket MessageHandler must discard clients after async delivery failures")
 
     handler_tests = (ROOT / "tests" / "test_chat_handlers.py").read_text(encoding="utf-8")
     if "test_socket_clients_are_isolated_per_application" not in handler_tests:
@@ -119,6 +132,14 @@ def main():
     ):
         if contract not in handler_tests:
             failures.append(f"WebSocket frame-limit regression contract is missing: {contract}")
+    for contract in (
+        "test_socket_message_keeps_client_after_async_delivery_succeeds",
+        "test_socket_message_discards_client_after_async_delivery_fails",
+        "test_socket_message_discards_client_after_async_delivery_is_cancelled",
+        "client.delivery.finish()",
+    ):
+        if contract not in handler_tests:
+            failures.append(f"WebSocket async-delivery regression contract is missing: {contract}")
 
     requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     if "tornado==6.5.6" not in requirements:
