@@ -82,6 +82,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   and isolated from later callbacks.
   Tornado rejects WebSocket frames larger than 4096 bytes before JSON decoding
   while retaining the 500-character validated chat-body limit.
+  Comet long polls expire after 25 seconds with `204 No Content`; the browser
+  treats that response as a normal signal to start a fresh bounded poll.
 - `make check` also requires completed canonical plans under `docs/plans`.
 - GitHub Actions installs the pinned runtime and test requirements, then runs
   the same `make check` baseline on Python 3.10, 3.12, and 3.14 for pushes,

@@ -147,6 +147,34 @@ def test_comet_handler_removes_waiting_callback_on_connection_close():
     assert message_future.cancel_count == 1
 
 
+def test_comet_handler_times_out_and_cleans_up_long_poll(monkeypatch):
+    comet = load_module("comet_app", "comet_chat/application.py")
+    messages = comet.Messages()
+    statuses = []
+    delivered = []
+
+    async def timeout_wait(message_future, timeout):
+        assert timeout == comet.COMET_LONG_POLL_TIMEOUT_SECONDS
+        message_future.cancel()
+        raise asyncio.TimeoutError
+
+    monkeypatch.setattr(comet.asyncio, "wait_for", timeout_wait)
+    handler = comet.MessageHandler.__new__(comet.MessageHandler)
+    handler.application = type("Application", (), {
+        "chat_messages": messages,
+    })()
+    handler.set_status = statuses.append
+    handler.on_message = delivered.append
+
+    asyncio.run(handler.get())
+
+    assert statuses == [204]
+    assert delivered == []
+    assert messages.callbacks == []
+    assert handler._message_callback is None
+    assert handler._message_future is None
+
+
 def test_comet_message_normalization_trims_and_bounds_input():
     comet = load_module("comet_app", "comet_chat/application.py")
 

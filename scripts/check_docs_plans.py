@@ -16,6 +16,7 @@ OFFLINE_CLIENT_PLAN = DOCS_PLANS / "2026-06-10-offline-browser-clients.md"
 SOCKET_REGISTRY_PLAN = DOCS_PLANS / "2026-06-10-websocket-client-registry.md"
 SOCKET_FRAME_LIMIT_PLAN = DOCS_PLANS / "2026-06-12-websocket-frame-limit.md"
 SOCKET_ASYNC_DELIVERY_PLAN = DOCS_PLANS / "2026-06-12-websocket-async-delivery-failures.md"
+COMET_TIMEOUT_PLAN = DOCS_PLANS / "2026-06-13-comet-long-poll-timeout.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -40,6 +41,8 @@ def main():
         failures.append("docs/plans/2026-06-12-websocket-frame-limit.md is missing")
     if not SOCKET_ASYNC_DELIVERY_PLAN.exists():
         failures.append("docs/plans/2026-06-12-websocket-async-delivery-failures.md is missing")
+    if not COMET_TIMEOUT_PLAN.exists():
+        failures.append("docs/plans/2026-06-13-comet-long-poll-timeout.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -65,6 +68,14 @@ def main():
     )
     if "GitHub Actions" not in docs:
         failures.append("project docs must mention the GitHub Actions baseline")
+    documentation_contracts = {
+        "README.md": "Comet long polls expire after 25 seconds",
+        "SECURITY.md": "25-second server-side lifetime",
+        "VISION.md": "Keep idle comet long polls bounded",
+    }
+    for relative_path, contract in documentation_contracts.items():
+        if contract not in (ROOT / relative_path).read_text(encoding="utf-8"):
+            failures.append(f"{relative_path} must document bounded comet long polls")
 
     comet = (ROOT / "comet_chat" / "application.py").read_text(encoding="utf-8")
     if "@tornado.web.asynchronous" in comet or "self.async_callback" in comet:
@@ -91,6 +102,19 @@ def main():
         failures.append("comet Messages.add must isolate callback delivery exceptions")
     if "'xsrf_cookies' : True" not in comet:
         failures.append("comet Application must enable Tornado XSRF cookies")
+    for contract in (
+        "COMET_LONG_POLL_TIMEOUT_SECONDS = 25",
+        "await asyncio.wait_for(",
+        "timeout=COMET_LONG_POLL_TIMEOUT_SECONDS",
+        "except asyncio.TimeoutError:",
+        "self.set_status(204)",
+    ):
+        if contract not in comet:
+            failures.append(f"comet long-poll timeout contract is missing: {contract}")
+    if comet.count("self.application.chat_messages.remove_callback(") < 2:
+        failures.append("comet long polls must remove callbacks on completion and disconnect")
+    if "self._message_future = None" not in comet:
+        failures.append("comet long polls must clear handler-owned future state")
 
     socket = (ROOT / "socket_chat" / "application.py").read_text(encoding="utf-8")
     if "str(BASE_DIR / 'templates')" not in socket or "str(BASE_DIR / 'static')" not in socket:
@@ -125,6 +149,14 @@ def main():
     handler_tests = (ROOT / "tests" / "test_chat_handlers.py").read_text(encoding="utf-8")
     if "test_socket_clients_are_isolated_per_application" not in handler_tests:
         failures.append("socket application client-registry isolation coverage is missing")
+    for contract in (
+        "test_comet_handler_times_out_and_cleans_up_long_poll",
+        "assert statuses == [204]",
+        "assert messages.callbacks == []",
+        "assert handler._message_future is None",
+    ):
+        if contract not in handler_tests:
+            failures.append(f"comet timeout regression contract is missing: {contract}")
     for contract in (
         "test_socket_application_bounds_websocket_frames",
         'application.settings["websocket_max_message_size"] == 4096',
@@ -185,11 +217,22 @@ def main():
 
     runtime_tests = (ROOT / "tests" / "test_tornado6_runtime.py").read_text(encoding="utf-8")
     for test_name in (
+        "test_long_poll_timeout_returns_no_content_and_cleans_up",
         "test_comet_post_rejects_missing_xsrf_token",
         "test_comet_post_accepts_rendered_xsrf_token",
     ):
         if test_name not in runtime_tests:
-            failures.append(f"runtime XSRF coverage is missing: {test_name}")
+            failures.append(f"runtime coverage is missing: {test_name}")
+
+    static_tests = (ROOT / "tests" / "test_static_assets.py").read_text(encoding="utf-8")
+    for contract in (
+        "test_comet_client_treats_no_content_as_normal_repoll",
+        "response.status is 204",
+        "response.status === 204",
+        "if (data !== null)",
+    ):
+        if contract not in static_tests:
+            failures.append(f"comet timeout browser coverage is missing: {contract}")
 
     if failures:
         print("Documentation plan checks failed:", file=sys.stderr)

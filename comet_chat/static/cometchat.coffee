@@ -14,9 +14,10 @@ poll = ->
             Accept: 'application/json'
     ).then((response) ->
         throw new Error "Message poll failed: #{response.status}" unless response.ok
+        return null if response.status is 204
         response.json()
     ).then((data) ->
-        appendMessage data.message
+        appendMessage data.message unless data is null
         setTimeout poll, 0
     ).catch((error) ->
         console.error error

@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-13
+
+- Bounded comet long polls to 25 seconds, return `204 No Content` on expiry,
+  and made the browser repoll without logging an empty-body parse error.
+
 ## 2026-06-12
 
 - Observed asynchronous WebSocket write failures and removed only the failed

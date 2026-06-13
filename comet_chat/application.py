@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 MAX_MESSAGE_LENGTH = 500
+COMET_LONG_POLL_TIMEOUT_SECONDS = 25
 BASE_DIR = Path(__file__).resolve().parent
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,13 @@ class MessageHandler(tornado.web.RequestHandler):
         self.application.chat_messages.register_callback(
             self._message_callback)
         try:
-            message = await message_future
+            message = await asyncio.wait_for(
+                message_future,
+                timeout=COMET_LONG_POLL_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            self.set_status(204)
+            return
         except asyncio.CancelledError:
             return
         finally:

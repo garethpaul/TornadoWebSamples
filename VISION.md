@@ -22,6 +22,7 @@ Priority:
 - Keep browser input hints aligned with server-side message limits
 - Keep comet long-poll callback queues isolated per message store
 - Remove abandoned comet long-poll callbacks when connections close
+- Keep idle comet long polls bounded and release their callback state
 - Keep comet callback dispatch snapshot-based so new waits survive current sends
 - Keep comet callback delivery failures isolated to the failing callback
 - Keep WebSocket callback delivery failures isolated to the failing callback

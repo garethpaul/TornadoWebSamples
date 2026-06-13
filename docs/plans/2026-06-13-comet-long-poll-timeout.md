@@ -1,6 +1,6 @@
 # Comet Long-Poll Timeout
 
-Status: In Progress
+Status: Completed
 
 ## Problem
 
@@ -37,9 +37,15 @@ retain request futures and callbacks without a server-side lifetime bound.
 
 ## Verification
 
-- Run focused handler tests and the full pinned Python 3.12 `make check` gate.
-- Run the same gate from an external working directory.
-- Reject hostile mutations for the timeout constant, wait wrapper, status,
-  cleanup, tests, documentation, and completed plan evidence.
-- Audit syntax, HTML/SVG/YAML/JavaScript artifacts, secrets, generated caches,
-  exact diff, and worktree state.
+- Focused handler and browser-client tests passed 27 cases.
+- A disposable Python 3.12.8 environment installed the exact pinned runtime and
+  test requirements and passed all 32 tests with Tornado 6.5.6 and pytest 9.0.3.
+- The full pinned `make check` gate and external-working-directory invocation
+  passed 32 tests, 17 workflow mutations, `pip check`, and `pip-audit` with no
+  known vulnerabilities.
+- Eleven hostile mutations for the timeout constant, wait wrapper, timeout
+  handling/status, completion cleanup, browser behavior, tests, documentation,
+  and completed plan evidence were rejected.
+- Python AST, workflow YAML, JavaScript syntax, HTML, and SVG XML parsing passed.
+- Secret-pattern, generated-cache, exact-diff, and worktree audits passed; only
+  ignored bytecode and pytest caches were preserved and excluded from commit.

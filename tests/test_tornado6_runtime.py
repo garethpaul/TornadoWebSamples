@@ -41,6 +41,19 @@ class TestCometApplication(AsyncHTTPTestCase):
         assert json.loads(response.body) == {"message": "hello"}
         assert self._app.chat_messages.callbacks == []
 
+    @gen_test
+    async def test_long_poll_timeout_returns_no_content_and_cleans_up(self):
+        self.comet.COMET_LONG_POLL_TIMEOUT_SECONDS = 0.01
+
+        response = await self.http_client.fetch(
+            self.get_url("/message"),
+            raise_error=False,
+        )
+
+        assert response.code == 204
+        assert response.body == b""
+        assert self._app.chat_messages.callbacks == []
+
     def test_template_paths_are_independent_of_working_directory(self):
         response = self.fetch("/")
 
