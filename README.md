@@ -82,6 +82,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   and isolated from later callbacks.
   Tornado rejects WebSocket frames larger than 4096 bytes before JSON decoding
   while retaining the 500-character validated chat-body limit.
+  Comet request bodies are capped at 4096 bytes by the standalone HTTP server
+  before Tornado buffers or parses form data, while the same 500-character
+  semantic message limit remains in force.
   Comet long polls expire after 25 seconds with `204 No Content`; the browser
   treats that response as a normal signal to start a fresh bounded poll.
 - `make check` also requires completed canonical plans under `docs/plans`.

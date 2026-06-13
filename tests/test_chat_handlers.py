@@ -50,6 +50,13 @@ def test_comet_messages_notify_and_clear_callbacks():
     assert messages.callbacks == []
 
 
+def test_comet_application_bounds_request_bodies():
+    comet = load_module("comet_body_limit_app", "comet_chat/application.py")
+
+    assert comet.http_server_options() == {"max_body_size": 4096}
+    assert comet.MAX_COMET_REQUEST_BODY_SIZE > comet.MAX_MESSAGE_LENGTH * 4
+
+
 def test_comet_messages_keep_new_callbacks_for_next_dispatch():
     comet = load_module("comet_app", "comet_chat/application.py")
     messages = comet.Messages()

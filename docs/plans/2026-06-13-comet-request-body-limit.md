@@ -2,10 +2,12 @@
 title: Comet Request Body Limit
 date: 2026-06-13
 type: implementation-plan
-status: planned
+status: completed
 ---
 
 # Comet Request Body Limit
+
+Status: Completed
 
 ## Summary
 
@@ -97,13 +99,19 @@ for their own outer request limits.
 
 ## Verification
 
-- Focused comet handler and runtime HTTP tests.
-- Full pinned `make check` from the repository and an external working
-  directory, each with explicit timeouts.
-- Hostile mutations covering the constant, server option, production wiring,
-  runtime rejection, docs, and completed plan status.
-- Python syntax, workflow YAML, JavaScript syntax, structured-document,
-  artifact, whitespace, intended-path, and secret audits.
+- Focused comet handler and runtime HTTP validation passed 27 tests, including
+  a maximum-length multipart browser form and an oversized transport rejection.
+- A disposable exact-source snapshot passed the full pinned `make check` gate
+  under a 180-second timeout: 35 tests, 17 workflow mutations, `pip check`, and
+  `pip-audit` with no known runtime vulnerabilities.
+- The same bounded full gate passed from the repository and from an external
+  working directory against the completed plan record.
+- Eight hostile mutations covering the constant, server option, production
+  wiring, configuration and runtime tests, documentation, and completed plan
+  status were rejected.
+- Python AST, workflow YAML, JavaScript syntax, HTML, and SVG parsing passed;
+  exact-path, generated-artifact, whitespace, and changed-line secret audits
+  found no unintended files or sensitive material.
 
 ## Sources
 

@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Capped standalone comet request bodies at 4096 bytes before Tornado buffers
+  or parses form data, complementing the existing 500-character message limit.
 - Bounded comet long polls to 25 seconds, return `204 No Content` on expiry,
   and made the browser repoll without logging an empty-body parse error.
 

@@ -23,6 +23,16 @@ class TestCometApplication(AsyncHTTPTestCase):
         self.comet = load_module("comet_runtime_app", "comet_chat/application.py")
         return self.comet.Application()
 
+    def get_httpserver_options(self):
+        return self.comet.http_server_options()
+
+    def _fetch_xsrf_token(self):
+        page = self.fetch("/")
+        cookies = SimpleCookie()
+        for header in page.headers.get_list("Set-Cookie"):
+            cookies.load(header)
+        return cookies["_xsrf"].value
+
     @gen_test
     async def test_long_poll_delivers_message_on_tornado_6(self):
         response_future = self.http_client.fetch(self.get_url("/message"))
@@ -71,11 +81,7 @@ class TestCometApplication(AsyncHTTPTestCase):
         assert response.code == 403
 
     def test_comet_post_accepts_rendered_xsrf_token(self):
-        page = self.fetch("/")
-        cookies = SimpleCookie()
-        for header in page.headers.get_list("Set-Cookie"):
-            cookies.load(header)
-        token = cookies["_xsrf"].value
+        token = self._fetch_xsrf_token()
         received = []
         self._app.chat_messages.register_callback(received.append)
 
@@ -91,3 +97,49 @@ class TestCometApplication(AsyncHTTPTestCase):
 
         assert response.code == 200
         assert received == ["hello"]
+
+    def test_comet_post_accepts_maximum_browser_form_body(self):
+        token = self._fetch_xsrf_token()
+        message = "\U0001f600" * self.comet.MAX_MESSAGE_LENGTH
+        boundary = "TornadoWebSamplesBoundary"
+        body = (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="_xsrf"\r\n\r\n'
+            f"{token}\r\n"
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="message"\r\n\r\n'
+            f"{message}\r\n"
+            f"--{boundary}--\r\n"
+        ).encode("utf-8")
+        received = []
+        self._app.chat_messages.register_callback(received.append)
+
+        assert len(body) < self.comet.MAX_COMET_REQUEST_BODY_SIZE
+
+        response = self.fetch(
+            "/message",
+            method="POST",
+            headers={
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+                "Cookie": f"_xsrf={token}",
+            },
+            body=body,
+        )
+
+        assert response.code == 200
+        assert received == [message]
+
+    def test_comet_post_rejects_oversized_request_body(self):
+        received = []
+        self._app.chat_messages.register_callback(received.append)
+
+        response = self.fetch(
+            "/message",
+            method="POST",
+            headers={"Content-Type": "application/octet-stream"},
+            body=b"x" * (self.comet.MAX_COMET_REQUEST_BODY_SIZE + 1),
+            raise_error=False,
+        )
+
+        assert response.code == 400
+        assert received == []

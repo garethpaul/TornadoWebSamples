@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 MAX_MESSAGE_LENGTH = 500
+MAX_COMET_REQUEST_BODY_SIZE = 4096
 COMET_LONG_POLL_TIMEOUT_SECONDS = 25
 BASE_DIR = Path(__file__).resolve().parent
 logger = logging.getLogger(__name__)
@@ -22,6 +23,10 @@ def normalize_message(message):
     if not message or len(message) > MAX_MESSAGE_LENGTH:
         return None
     return message
+
+
+def http_server_options():
+    return {'max_body_size': MAX_COMET_REQUEST_BODY_SIZE}
 
 
 class Messages(object):
@@ -163,7 +168,7 @@ class Application(tornado.web.Application):
 if __name__ == '__main__':
     tornado.options.parse_command_line()
     app = Application()
-    http_server = tornado.httpserver.HTTPServer(app)
+    http_server = tornado.httpserver.HTTPServer(app, **http_server_options())
     http_server.listen(8000, address='127.0.0.1')
     autoreload.start()
     tornado.ioloop.IOLoop.current().start()

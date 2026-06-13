@@ -42,6 +42,9 @@ Helpful reports include:
   to the 500-character validated chat-body limit.
 - Comet long polls have a 25-second server-side lifetime and release their
   callback/future state on delivery, timeout, cancellation, or disconnect.
+- Comet request bodies are capped at 4096 bytes by the standalone HTTP server
+  before form parsing. Reverse proxies and alternate deployment entry points
+  must enforce an equivalent or stricter outer limit.
 - GitHub Actions runs the same `make check` baseline as local development with
   Ubuntu 24.04, read-only permissions, credential-free checkout, a ten-minute
   timeout, concurrency cancellation, and commit-pinned Node 24 actions.

@@ -17,6 +17,7 @@ SOCKET_REGISTRY_PLAN = DOCS_PLANS / "2026-06-10-websocket-client-registry.md"
 SOCKET_FRAME_LIMIT_PLAN = DOCS_PLANS / "2026-06-12-websocket-frame-limit.md"
 SOCKET_ASYNC_DELIVERY_PLAN = DOCS_PLANS / "2026-06-12-websocket-async-delivery-failures.md"
 COMET_TIMEOUT_PLAN = DOCS_PLANS / "2026-06-13-comet-long-poll-timeout.md"
+COMET_BODY_LIMIT_PLAN = DOCS_PLANS / "2026-06-13-comet-request-body-limit.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -43,6 +44,8 @@ def main():
         failures.append("docs/plans/2026-06-12-websocket-async-delivery-failures.md is missing")
     if not COMET_TIMEOUT_PLAN.exists():
         failures.append("docs/plans/2026-06-13-comet-long-poll-timeout.md is missing")
+    if not COMET_BODY_LIMIT_PLAN.exists():
+        failures.append("docs/plans/2026-06-13-comet-request-body-limit.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -69,13 +72,24 @@ def main():
     if "GitHub Actions" not in docs:
         failures.append("project docs must mention the GitHub Actions baseline")
     documentation_contracts = {
-        "README.md": "Comet long polls expire after 25 seconds",
-        "SECURITY.md": "25-second server-side lifetime",
-        "VISION.md": "Keep idle comet long polls bounded",
+        "README.md": (
+            "Comet long polls expire after 25 seconds",
+            "Comet request bodies are capped at 4096 bytes",
+        ),
+        "SECURITY.md": (
+            "25-second server-side lifetime",
+            "Comet request bodies are capped at 4096 bytes",
+        ),
+        "VISION.md": (
+            "Keep idle comet long polls bounded",
+            "Bound comet request bodies before form parsing",
+        ),
     }
-    for relative_path, contract in documentation_contracts.items():
-        if contract not in (ROOT / relative_path).read_text(encoding="utf-8"):
-            failures.append(f"{relative_path} must document bounded comet long polls")
+    for relative_path, contracts in documentation_contracts.items():
+        document = (ROOT / relative_path).read_text(encoding="utf-8")
+        for contract in contracts:
+            if contract not in document:
+                failures.append(f"{relative_path} must document: {contract}")
 
     comet = (ROOT / "comet_chat" / "application.py").read_text(encoding="utf-8")
     if "@tornado.web.asynchronous" in comet or "self.async_callback" in comet:
@@ -102,6 +116,14 @@ def main():
         failures.append("comet Messages.add must isolate callback delivery exceptions")
     if "'xsrf_cookies' : True" not in comet:
         failures.append("comet Application must enable Tornado XSRF cookies")
+    for contract in (
+        "MAX_COMET_REQUEST_BODY_SIZE = 4096",
+        "def http_server_options():",
+        "return {'max_body_size': MAX_COMET_REQUEST_BODY_SIZE}",
+        "HTTPServer(app, **http_server_options())",
+    ):
+        if contract not in comet:
+            failures.append(f"comet request-body limit contract is missing: {contract}")
     for contract in (
         "COMET_LONG_POLL_TIMEOUT_SECONDS = 25",
         "await asyncio.wait_for(",
@@ -149,6 +171,13 @@ def main():
     handler_tests = (ROOT / "tests" / "test_chat_handlers.py").read_text(encoding="utf-8")
     if "test_socket_clients_are_isolated_per_application" not in handler_tests:
         failures.append("socket application client-registry isolation coverage is missing")
+    for contract in (
+        "test_comet_application_bounds_request_bodies",
+        'comet.http_server_options() == {"max_body_size": 4096}',
+        "MAX_COMET_REQUEST_BODY_SIZE > comet.MAX_MESSAGE_LENGTH * 4",
+    ):
+        if contract not in handler_tests:
+            failures.append(f"comet request-body regression contract is missing: {contract}")
     for contract in (
         "test_comet_handler_times_out_and_cleans_up_long_poll",
         "assert statuses == [204]",
@@ -220,6 +249,12 @@ def main():
         "test_long_poll_timeout_returns_no_content_and_cleans_up",
         "test_comet_post_rejects_missing_xsrf_token",
         "test_comet_post_accepts_rendered_xsrf_token",
+        "test_comet_post_accepts_maximum_browser_form_body",
+        "assert len(body) < self.comet.MAX_COMET_REQUEST_BODY_SIZE",
+        "test_comet_post_rejects_oversized_request_body",
+        "return self.comet.http_server_options()",
+        "assert response.code == 400",
+        "assert received == []",
     ):
         if test_name not in runtime_tests:
             failures.append(f"runtime coverage is missing: {test_name}")
