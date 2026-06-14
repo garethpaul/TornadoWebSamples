@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import re
 import sys
 
 from workflow_contract import validate as validate_workflow
@@ -18,6 +19,7 @@ SOCKET_FRAME_LIMIT_PLAN = DOCS_PLANS / "2026-06-12-websocket-frame-limit.md"
 SOCKET_ASYNC_DELIVERY_PLAN = DOCS_PLANS / "2026-06-12-websocket-async-delivery-failures.md"
 COMET_TIMEOUT_PLAN = DOCS_PLANS / "2026-06-13-comet-long-poll-timeout.md"
 COMET_BODY_LIMIT_PLAN = DOCS_PLANS / "2026-06-13-comet-request-body-limit.md"
+ROOT_OVERRIDE_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protection.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -46,6 +48,8 @@ def main():
         failures.append("docs/plans/2026-06-13-comet-long-poll-timeout.md is missing")
     if not COMET_BODY_LIMIT_PLAN.exists():
         failures.append("docs/plans/2026-06-13-comet-request-body-limit.md is missing")
+    if not ROOT_OVERRIDE_PLAN.exists():
+        failures.append("docs/plans/2026-06-14-make-root-override-protection.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -211,14 +215,33 @@ def main():
             failures.append(f"test-requirements.txt must pin {requirement}")
 
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
+    root_declaration = "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))"
+    root_assignments = re.findall(
+        r"^(?:override\s+)?ROOT\s*[:+?]?=", makefile, re.MULTILINE
+    )
+    if len(root_assignments) != 1 or makefile.count(root_declaration) != 1:
+        failures.append("Makefile must contain exactly one protected repository-root declaration")
+    if makefile.count(f"{root_declaration}\nPYTHON ?= python3") != 1:
+        failures.append("Makefile must keep the protected root before the Python override")
     for contract in (
-        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))",
+        ".PHONY: build check contract-test lint test verify",
+        "build: lint",
+        "verify: lint contract-test test build",
+        "check: verify",
+        '"$(ROOT)/comet_chat/application.py"',
+        '"$(ROOT)/socket_chat/application.py"',
+        '"$(ROOT)/scripts/check_docs_plans.py"',
         '"$(ROOT)/scripts/test_workflow_contract.py"',
         "env -u PYTHONPATH $(PYTHON) -m pip check",
         'pip_audit -r "$(ROOT)/requirements.txt"',
     ):
         if contract not in makefile:
             failures.append(f"Makefile verification contract is missing: {contract}")
+
+    if "docs/plans/2026-06-14-make-root-override-protection.md" not in (
+        ROOT / "README.md"
+    ).read_text(encoding="utf-8"):
+        failures.append("README.md must index Make root override protection evidence")
 
     templates = [
         (ROOT / "comet_chat" / "templates" / "index.html").read_text(encoding="utf-8"),

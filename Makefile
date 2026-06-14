@@ -1,6 +1,6 @@
 .PHONY: build check contract-test lint test verify
 
-ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PYTHON ?= python3
 
 lint:

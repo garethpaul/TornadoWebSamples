@@ -145,6 +145,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   registry ownership and application-isolation coverage.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the Tornado 6 runtime and CI
   modernization.
+- See `docs/plans/2026-06-14-make-root-override-protection.md` for repository-
+  anchored Make verification under hostile root assignments.
 
 ## Contributing
 
