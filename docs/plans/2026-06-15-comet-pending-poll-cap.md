@@ -1,11 +1,13 @@
 ---
 title: Comet Pending Poll Cap
 type: security
-status: planned
+status: in_progress
 date: 2026-06-15
 ---
 
 # Comet Pending Poll Cap
+
+## Status: In Progress
 
 ## Problem Frame
 
@@ -22,6 +24,8 @@ callbacks, and futures for up to 25 seconds before timeout cleanup runs.
    cancellation, and disconnect paths.
 3. P2: Return explicit temporary-overload behavior and make the capacity
    contract mutation-sensitive.
+4. P0 execution discovery: Raise Tornado from vulnerable 6.5.6 to patched 6.5.7
+   after the pinned audit identified `GHSA-pw6j-qg29-8w7f`.
 
 ## Requirements
 
@@ -35,6 +39,8 @@ callbacks, and futures for up to 25 seconds before timeout cleanup runs.
   timeout, callback snapshot delivery, loopback binding, and browser behavior.
 - Cover admission, overload rejection, slot reuse, and all existing cleanup
   paths with deterministic offline tests and static contracts.
+- Pin Tornado 6.5.7 and make downgrade to the affected 6.5.6 release fail the
+  canonical gate.
 
 ## Key Technical Decisions
 
@@ -53,6 +59,9 @@ This change does not add authentication, distributed coordination, persistent
 history, per-IP quotas, global rate limiting, reverse-proxy policy, or
 WebSocket connection limits. The executable remains loopback-bound and is not
 made production-ready by this local resource cap.
+
+The patch-level Tornado update discovered by the required audit is included;
+broader dependency modernization remains out of scope.
 
 ## Implementation Units
 
@@ -81,6 +90,15 @@ and this plan
 
 Document the in-process pending-poll cap and explicitly preserve the sample's
 loopback-only, unauthenticated, non-production boundary.
+
+### U4. Remediate The Newly Published Tornado Advisory
+
+**Files:** `requirements.txt`, `scripts/check_docs_plans.py`, `README.md`,
+`SECURITY.md`, `VISION.md`, `CHANGES.md`, and this plan
+
+Raise the exact runtime pin to Tornado 6.5.7, require that version from the
+canonical gate, rerun the complete pinned suite, and require `pip-audit` to
+report no known runtime vulnerabilities.
 
 ## Risks And Mitigations
 
@@ -112,3 +130,32 @@ loopback-only, unauthenticated, non-production boundary.
   https://www.tornadoweb.org/en/stable/web.html
 - Tornado asyncio integration documentation:
   https://www.tornadoweb.org/en/stable/asyncio.html
+- GitHub Advisory Database, `GHSA-pw6j-qg29-8w7f` (affected through 6.5.6,
+  patched in 6.5.7):
+  https://github.com/advisories/GHSA-pw6j-qg29-8w7f
+- Tornado 6.5.7 release notes:
+  https://www.tornadoweb.org/en/stable/releases/v6.5.7.html
+
+## Work Completed
+
+- Added a 100-callback application-owned admission cap with a one-second retry
+  hint and defensive registration enforcement.
+- Rejected overload with HTTP 503 before future allocation while preserving
+  delivery, timeout, cancellation, disconnect, and slot-reuse cleanup.
+- Added deterministic unit/runtime regressions, canonical source contracts,
+  synchronized guidance, and completed-plan enforcement.
+
+## Verification In Progress
+
+- All 37 pinned offline tests passed, including pending-poll admission,
+  overload rejection, retry metadata, and slot-reuse coverage.
+- The first repository pinned `make check` passed compilation, documentation
+  contracts, 17 workflow mutations, and all tests, then correctly failed when
+  `pip-audit` identified Tornado 6.5.6 as affected by
+  `GHSA-pw6j-qg29-8w7f`. Full root and external gates must be rerun after the
+  6.5.7 update.
+- Nine isolated hostile pending-poll mutations were rejected across the limit,
+  admission, pre-allocation ordering, overload response, cleanup, tests,
+  guidance, and completed-plan status.
+- No live network service, credential, browser, or production deployment was
+  exercised; the sample remains loopback-bound and non-production.
