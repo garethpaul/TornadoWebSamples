@@ -12,6 +12,8 @@ from pathlib import Path
 MAX_MESSAGE_LENGTH = 500
 MAX_COMET_REQUEST_BODY_SIZE = 4096
 COMET_LONG_POLL_TIMEOUT_SECONDS = 25
+MAX_PENDING_COMET_POLLS = 100
+COMET_OVERLOAD_RETRY_SECONDS = 1
 BASE_DIR = Path(__file__).resolve().parent
 logger = logging.getLogger(__name__)
 
@@ -35,8 +37,12 @@ class Messages(object):
     callbacks waiting to hear new messages
     """
 
-    def __init__(self):
+    def __init__(self, max_callbacks=MAX_PENDING_COMET_POLLS):
         self.callbacks = []
+        self.max_callbacks = max_callbacks
+
+    def has_capacity(self):
+        return len(self.callbacks) < self.max_callbacks
 
     def add(self, message):
         """
@@ -55,8 +61,12 @@ class Messages(object):
         """
         Register a callback for when messages are added
         """
-        if callback not in self.callbacks:
-            self.callbacks.append(callback)
+        if callback in self.callbacks:
+            return True
+        if not self.has_capacity():
+            return False
+        self.callbacks.append(callback)
+        return True
 
     def remove_callback(self, callback):
         """
@@ -73,6 +83,11 @@ class MessageHandler(tornado.web.RequestHandler):
         """
         Get the latest messages
         """
+        if not self.application.chat_messages.has_capacity():
+            self.set_status(503)
+            self.set_header('Retry-After', str(COMET_OVERLOAD_RETRY_SECONDS))
+            return
+
         message_future = asyncio.get_running_loop().create_future()
         self._message_future = message_future
 
@@ -81,8 +96,14 @@ class MessageHandler(tornado.web.RequestHandler):
                 message_future.set_result(message)
 
         self._message_callback = receive_message
-        self.application.chat_messages.register_callback(
-            self._message_callback)
+        if not self.application.chat_messages.register_callback(
+                self._message_callback):
+            message_future.cancel()
+            self._message_callback = None
+            self._message_future = None
+            self.set_status(503)
+            self.set_header('Retry-After', str(COMET_OVERLOAD_RETRY_SECONDS))
+            return
         try:
             message = await asyncio.wait_for(
                 message_future,

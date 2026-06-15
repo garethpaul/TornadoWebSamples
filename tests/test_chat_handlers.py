@@ -122,6 +122,24 @@ def test_comet_messages_remove_abandoned_callback():
     assert messages.callbacks == []
 
 
+def test_comet_messages_bound_pending_callbacks_and_reuse_removed_slot():
+    comet = load_module("comet_capacity_app", "comet_chat/application.py")
+    messages = comet.Messages(max_callbacks=2)
+    first = lambda message: message
+    second = lambda message: message
+    rejected = lambda message: message
+
+    assert messages.register_callback(first)
+    assert messages.register_callback(second)
+    assert not messages.register_callback(rejected)
+    assert messages.callbacks == [first, second]
+
+    messages.remove_callback(first)
+
+    assert messages.register_callback(rejected)
+    assert messages.callbacks == [second, rejected]
+
+
 def test_comet_handler_removes_waiting_callback_on_connection_close():
     comet = load_module("comet_app", "comet_chat/application.py")
     messages = comet.Messages()

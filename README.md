@@ -87,7 +87,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   semantic message limit remains in force.
   Comet long polls expire after 25 seconds with `204 No Content`; the browser
   treats that response as a normal signal to start a fresh bounded poll.
+  Comet accepts at most 100 pending long polls and returns `503` with
+  `Retry-After: 1` when capacity is exhausted.
 - `make check` also requires completed canonical plans under `docs/plans`.
+- Runtime dependencies pin Tornado 6.5.7, which fixes
+  `GHSA-pw6j-qg29-8w7f`; the audit gate rejects affected dependency states.
 - GitHub Actions installs the pinned runtime and test requirements, then runs
   the same `make check` baseline on Python 3.10, 3.12, and 3.14 for pushes,
   pull requests, and manual runs. The workflow uses Ubuntu 24.04, read-only

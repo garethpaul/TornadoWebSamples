@@ -42,6 +42,10 @@ Helpful reports include:
   to the 500-character validated chat-body limit.
 - Comet long polls have a 25-second server-side lifetime and release their
   callback/future state on delivery, timeout, cancellation, or disconnect.
+- Comet accepts at most 100 pending long polls and returns `503` with
+  `Retry-After: 1` when capacity is exhausted.
+- Tornado is pinned to 6.5.7 to remediate `GHSA-pw6j-qg29-8w7f`, and the
+  canonical gate audits the runtime dependency graph.
 - Comet request bodies are capped at 4096 bytes by the standalone HTTP server
   before form parsing. Reverse proxies and alternate deployment entry points
   must enforce an equivalent or stricter outer limit.

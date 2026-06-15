@@ -23,6 +23,8 @@ Priority:
 - Keep comet long-poll callback queues isolated per message store
 - Remove abandoned comet long-poll callbacks when connections close
 - Keep idle comet long polls bounded and release their callback state
+- Cap pending comet long polls at 100 and reject temporary overload explicitly
+- Keep Tornado at or above the reviewed 6.5.7 security patch level
 - Bound comet request bodies before form parsing
 - Keep comet callback dispatch snapshot-based so new waits survive current sends
 - Keep comet callback delivery failures isolated to the failing callback

@@ -64,6 +64,41 @@ class TestCometApplication(AsyncHTTPTestCase):
         assert response.body == b""
         assert self._app.chat_messages.callbacks == []
 
+    @gen_test
+    async def test_long_poll_capacity_rejects_overload_and_reuses_slot(self):
+        self._app.chat_messages.max_callbacks = 1
+        first_response = self.http_client.fetch(self.get_url("/message"))
+
+        for _ in range(100):
+            if len(self._app.chat_messages.callbacks) == 1:
+                break
+            await asyncio.sleep(0.01)
+        assert len(self._app.chat_messages.callbacks) == 1
+
+        overloaded = await self.http_client.fetch(
+            self.get_url("/message"),
+            raise_error=False,
+        )
+
+        assert overloaded.code == 503
+        assert overloaded.headers["Retry-After"] == "1"
+        assert len(self._app.chat_messages.callbacks) == 1
+
+        self._app.chat_messages.add("first")
+        assert json.loads((await first_response).body) == {"message": "first"}
+        assert self._app.chat_messages.callbacks == []
+
+        next_response = self.http_client.fetch(self.get_url("/message"))
+        for _ in range(100):
+            if len(self._app.chat_messages.callbacks) == 1:
+                break
+            await asyncio.sleep(0.01)
+        assert len(self._app.chat_messages.callbacks) == 1
+        self._app.chat_messages.add("next")
+
+        assert json.loads((await next_response).body) == {"message": "next"}
+        assert self._app.chat_messages.callbacks == []
+
     def test_template_paths_are_independent_of_working_directory(self):
         response = self.fetch("/")
 

@@ -1,13 +1,13 @@
 ---
 title: Comet Pending Poll Cap
 type: security
-status: in_progress
+status: completed
 date: 2026-06-15
 ---
 
 # Comet Pending Poll Cap
 
-## Status: In Progress
+## Status: Completed
 
 ## Problem Frame
 
@@ -145,17 +145,16 @@ report no known runtime vulnerabilities.
 - Added deterministic unit/runtime regressions, canonical source contracts,
   synchronized guidance, and completed-plan enforcement.
 
-## Verification In Progress
+## Verification Completed
 
 - All 37 pinned offline tests passed, including pending-poll admission,
   overload rejection, retry metadata, and slot-reuse coverage.
 - The first repository pinned `make check` passed compilation, documentation
   contracts, 17 workflow mutations, and all tests, then correctly failed when
   `pip-audit` identified Tornado 6.5.6 as affected by
-  `GHSA-pw6j-qg29-8w7f`. Full root and external gates must be rerun after the
-  6.5.7 update.
-- Nine isolated hostile pending-poll mutations were rejected across the limit,
+  `GHSA-pw6j-qg29-8w7f`. After upgrading to 6.5.7, the repository and external-directory pinned `make check` passed with no known runtime vulnerabilities.
+- Ten isolated hostile pending-poll mutations were rejected across the limit,
   admission, pre-allocation ordering, overload response, cleanup, tests,
-  guidance, and completed-plan status.
+  guidance, dependency patch level, and completed-plan status.
 - No live network service, credential, browser, or production deployment was
   exercised; the sample remains loopback-bound and non-production.

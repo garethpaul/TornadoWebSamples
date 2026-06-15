@@ -20,6 +20,7 @@ SOCKET_ASYNC_DELIVERY_PLAN = DOCS_PLANS / "2026-06-12-websocket-async-delivery-f
 COMET_TIMEOUT_PLAN = DOCS_PLANS / "2026-06-13-comet-long-poll-timeout.md"
 COMET_BODY_LIMIT_PLAN = DOCS_PLANS / "2026-06-13-comet-request-body-limit.md"
 ROOT_OVERRIDE_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protection.md"
+COMET_PENDING_POLL_PLAN = DOCS_PLANS / "2026-06-15-comet-pending-poll-cap.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -50,6 +51,8 @@ def main():
         failures.append("docs/plans/2026-06-13-comet-request-body-limit.md is missing")
     if not ROOT_OVERRIDE_PLAN.exists():
         failures.append("docs/plans/2026-06-14-make-root-override-protection.md is missing")
+    if not COMET_PENDING_POLL_PLAN.exists():
+        failures.append("docs/plans/2026-06-15-comet-pending-poll-cap.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -79,14 +82,17 @@ def main():
         "README.md": (
             "Comet long polls expire after 25 seconds",
             "Comet request bodies are capped at 4096 bytes",
+            "Comet accepts at most 100 pending long polls",
         ),
         "SECURITY.md": (
             "25-second server-side lifetime",
             "Comet request bodies are capped at 4096 bytes",
+            "Comet accepts at most 100 pending long polls",
         ),
         "VISION.md": (
             "Keep idle comet long polls bounded",
             "Bound comet request bodies before form parsing",
+            "Cap pending comet long polls at 100",
         ),
     }
     for relative_path, contracts in documentation_contracts.items():
@@ -137,6 +143,25 @@ def main():
     ):
         if contract not in comet:
             failures.append(f"comet long-poll timeout contract is missing: {contract}")
+    for contract in (
+        "def has_capacity(self):",
+        "len(self.callbacks) < self.max_callbacks",
+        "if not self.application.chat_messages.has_capacity():",
+        "self.set_status(503)",
+        "self.set_header('Retry-After', str(COMET_OVERLOAD_RETRY_SECONDS))",
+    ):
+        if contract not in comet:
+            failures.append(f"comet pending-poll capacity contract is missing: {contract}")
+    for name, value in (
+        ("MAX_PENDING_COMET_POLLS", 100),
+        ("COMET_OVERLOAD_RETRY_SECONDS", 1),
+    ):
+        if not re.search(rf"^{name} = {value}$", comet, re.MULTILINE):
+            failures.append(f"comet pending-poll constant is missing: {name} = {value}")
+    capacity_check = comet.find("if not self.application.chat_messages.has_capacity():")
+    future_allocation = comet.find("asyncio.get_running_loop().create_future()")
+    if capacity_check < 0 or future_allocation < 0 or capacity_check > future_allocation:
+        failures.append("comet capacity must be checked before long-poll future allocation")
     if comet.count("self.application.chat_messages.remove_callback(") < 2:
         failures.append("comet long polls must remove callbacks on completion and disconnect")
     if "self._message_future = None" not in comet:
@@ -191,6 +216,13 @@ def main():
         if contract not in handler_tests:
             failures.append(f"comet timeout regression contract is missing: {contract}")
     for contract in (
+        "test_comet_messages_bound_pending_callbacks_and_reuse_removed_slot",
+        "Messages(max_callbacks=2)",
+        "assert not messages.register_callback(rejected)",
+    ):
+        if contract not in handler_tests:
+            failures.append(f"comet pending-poll unit contract is missing: {contract}")
+    for contract in (
         "test_socket_application_bounds_websocket_frames",
         'application.settings["websocket_max_message_size"] == 4096',
         "MAX_WEBSOCKET_FRAME_SIZE > socket_app.MAX_MESSAGE_LENGTH * 4",
@@ -207,8 +239,8 @@ def main():
             failures.append(f"WebSocket async-delivery regression contract is missing: {contract}")
 
     requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
-    if "tornado==6.5.6" not in requirements:
-        failures.append("requirements.txt must pin Tornado 6.5.6")
+    if "tornado==6.5.7" not in requirements:
+        failures.append("requirements.txt must pin patched Tornado 6.5.7")
     test_requirements = (ROOT / "test-requirements.txt").read_text(encoding="utf-8")
     for requirement in ("pip==26.1.2", "pip-audit==2.10.0", "pytest==9.0.3"):
         if requirement not in test_requirements:
@@ -270,6 +302,9 @@ def main():
     runtime_tests = (ROOT / "tests" / "test_tornado6_runtime.py").read_text(encoding="utf-8")
     for test_name in (
         "test_long_poll_timeout_returns_no_content_and_cleans_up",
+        "test_long_poll_capacity_rejects_overload_and_reuses_slot",
+        'assert overloaded.code == 503',
+        'assert overloaded.headers["Retry-After"] == "1"',
         "test_comet_post_rejects_missing_xsrf_token",
         "test_comet_post_accepts_rendered_xsrf_token",
         "test_comet_post_accepts_maximum_browser_form_body",
@@ -281,6 +316,24 @@ def main():
     ):
         if test_name not in runtime_tests:
             failures.append(f"runtime coverage is missing: {test_name}")
+
+    if COMET_PENDING_POLL_PLAN.exists():
+        pending_poll_plan = COMET_PENDING_POLL_PLAN.read_text(encoding="utf-8")
+        for evidence in (
+            "Status: Completed",
+            "repository and external-directory pinned `make check` passed",
+            "hostile pending-poll mutations were rejected",
+        ):
+            if evidence not in pending_poll_plan:
+                failures.append(
+                    f"{COMET_PENDING_POLL_PLAN.relative_to(ROOT)} must record verification evidence: {evidence}"
+                )
+
+    for relative_path in ("AGENTS.md", "CHANGES.md"):
+        if "Comet accepts at most 100 pending long polls" not in (
+            ROOT / relative_path
+        ).read_text(encoding="utf-8"):
+            failures.append(f"{relative_path} must document the pending comet poll cap")
 
     static_tests = (ROOT / "tests" / "test_static_assets.py").read_text(encoding="utf-8")
     for contract in (

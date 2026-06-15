@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-15
+
+- Comet accepts at most 100 pending long polls and returns `503` with
+  `Retry-After: 1` when capacity is exhausted.
+- Raised Tornado to 6.5.7 to remediate `GHSA-pw6j-qg29-8w7f`.
+
 ## 2026-06-13
 
 - Capped standalone comet request bodies at 4096 bytes before Tornado buffers
