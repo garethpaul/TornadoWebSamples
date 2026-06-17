@@ -251,6 +251,47 @@ def test_socket_client_admission_bounds_registry_and_reuses_slot():
     assert application.chat_clients == {replacement}
 
 
+def test_socket_message_rate_limiter_bounds_and_expires_rolling_window():
+    socket_app = load_module("socket_rate_limit_app", "socket_chat/application.py")
+    now = [10.0]
+    limiter = socket_app.MessageRateLimiter(2, 1, clock=lambda: now[0])
+
+    assert limiter.allow()
+    assert limiter.allow()
+    assert not limiter.allow()
+
+    now[0] = 11.0
+
+    assert limiter.allow()
+    assert len(limiter.timestamps) == 1
+
+
+def test_socket_message_rate_limiters_are_independent_per_connection():
+    socket_app = load_module("socket_rate_isolation_app", "socket_chat/application.py")
+    first = socket_app.MessageRateLimiter(1, 60, clock=lambda: 10.0)
+    second = socket_app.MessageRateLimiter(1, 60, clock=lambda: 10.0)
+
+    assert first.allow()
+    assert not first.allow()
+    assert second.allow()
+
+
+def test_socket_message_rate_limit_discards_client_before_close():
+    socket_app = load_module("socket_rate_close_app", "socket_chat/application.py")
+    handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler._message_rate_limiter = type(
+        "RejectingLimiter", (), {"allow": lambda self: False}
+    )()
+    handler.application = type("Application", (), {"chat_clients": {handler}})()
+    closed = []
+    handler.close = lambda code=None, reason=None: closed.append((code, reason))
+
+    handler.on_message("not-json")
+
+    assert handler.application.chat_clients == set()
+    assert closed == [(1008, "Message rate limit exceeded")]
+
+
 def test_socket_application_bounds_websocket_frames():
     socket_app = load_module("socket_app", "socket_chat/application.py")
     application = socket_app.Application()

@@ -187,7 +187,11 @@ class TestSocketApplication(AsyncHTTPTestCase):
         self.socket = load_module(
             "socket_runtime_app", "socket_chat/application.py"
         )
-        return self.socket.Application(max_chat_clients=1)
+        return self.socket.Application(
+            max_chat_clients=1,
+            max_messages_per_window=1,
+            message_rate_window_seconds=60,
+        )
 
     async def _connect(self):
         request = HTTPRequest(
@@ -226,3 +230,19 @@ class TestSocketApplication(AsyncHTTPTestCase):
         finally:
             for client in clients:
                 client.close()
+
+    @gen_test
+    async def test_websocket_message_rate_limit_closes_offending_client(self):
+        client = await self._connect()
+        try:
+            await client.write_message(json.dumps({"body": "allowed"}))
+            assert await client.read_message() == "allowed"
+
+            await client.write_message(json.dumps({"body": "overloaded"}))
+
+            assert await client.read_message() is None
+            assert client.close_code == 1008
+            assert client.close_reason == "Message rate limit exceeded"
+            assert self._app.chat_clients == set()
+        finally:
+            client.close()

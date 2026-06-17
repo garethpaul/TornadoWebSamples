@@ -92,6 +92,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   WebSocket accepts at most 100 connected clients and closes temporary
   overload with code `1013` (`Try Again Later`); closing a client immediately
   releases its in-process slot.
+  WebSocket accepts at most 10 messages per second per connection and closes
+  sustained overload with policy code `1008` before JSON parsing or broadcast.
+  This process-local tutorial control is not authentication, a per-IP quota, or
+  distributed rate limiting.
 - `make check` also requires completed canonical plans under `docs/plans`.
 - Runtime dependencies pin Tornado 6.5.7, which fixes
   `GHSA-pw6j-qg29-8w7f`; the audit gate rejects affected dependency states.
@@ -134,6 +138,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   WebSocket delivery failure cleanup.
 - See `docs/plans/2026-06-17-websocket-client-cap.md` for bounded WebSocket
   admission, overload close semantics, and slot-reuse coverage.
+- See `docs/plans/2026-06-17-websocket-message-rate-limit.md` for the
+  per-connection rolling message-rate boundary.
 - See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and
   external asset URL coverage.
 - See `docs/plans/2026-06-09-websocket-origin-check.md` for same-host

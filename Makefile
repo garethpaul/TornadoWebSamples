@@ -12,6 +12,7 @@ test:
 
 contract-test:
 	$(PYTHON) "$(ROOT)/scripts/test_workflow_contract.py"
+	$(PYTHON) "$(ROOT)/scripts/test_websocket_message_rate_contract.py"
 
 build: lint
 

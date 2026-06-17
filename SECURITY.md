@@ -44,6 +44,10 @@ Helpful reports include:
   Temporary overload is closed with code `1013`, and rejected clients are not
   retained in the broadcast registry. This local cap is not authentication,
   per-IP throttling, or distributed abuse protection.
+- WebSocket accepts at most 10 messages per second per connection and closes
+  sustained overload with policy code `1008` before parsing or broadcast.
+  This process-local control does not identify users or coordinate quotas
+  across connections, workers, or hosts.
 - Comet long polls have a 25-second server-side lifetime and release their
   callback/future state on delivery, timeout, cancellation, or disconnect.
 - Comet accepts at most 100 pending long polls and returns `503` with

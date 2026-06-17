@@ -2,6 +2,8 @@
 
 ## 2026-06-17
 
+- WebSocket accepts at most 10 messages per second per connection and closes
+  sustained overload before JSON parsing and broadcast fan-out.
 - WebSocket accepts at most 100 connected clients and closes temporary
   overload with registered code `1013` without retaining the rejected client.
 

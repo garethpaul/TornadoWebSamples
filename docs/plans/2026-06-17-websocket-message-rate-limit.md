@@ -1,6 +1,6 @@
 # Bound Per-Connection WebSocket Message Rates
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -87,6 +87,20 @@ distributed quota service.
 - Audit the exact diff, generated artifacts, bytecode, package outputs, and
   credential patterns.
 - Require one bounded exact-head hosted snapshot after push.
+
+## Verification Results
+
+- Pinned Tornado 6.5.7 focused handler and runtime tests passed: 35 passed,
+  including deterministic rolling-window expiry, per-connection isolation, and
+  an in-process `1008` overload close.
+- Nine hostile WebSocket message-rate mutations were rejected across missing,
+  unconditional, shared, post-parse, non-expiring, count-disabled, and
+  wrong-close-code and retained-client variants.
+- repository and external-directory pinned `make check` passed compilation,
+  documentation contracts, 17 workflow mutations, the full 43-test suite,
+  dependency consistency, and vulnerability auditing.
+- No live service, public listener, account, credential, proxy topology, or
+  distributed worker deployment was exercised.
 
 ## Scope Boundaries
 
