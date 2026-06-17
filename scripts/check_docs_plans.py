@@ -21,6 +21,7 @@ COMET_TIMEOUT_PLAN = DOCS_PLANS / "2026-06-13-comet-long-poll-timeout.md"
 COMET_BODY_LIMIT_PLAN = DOCS_PLANS / "2026-06-13-comet-request-body-limit.md"
 ROOT_OVERRIDE_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protection.md"
 COMET_PENDING_POLL_PLAN = DOCS_PLANS / "2026-06-15-comet-pending-poll-cap.md"
+SOCKET_CLIENT_CAP_PLAN = DOCS_PLANS / "2026-06-17-websocket-client-cap.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -53,6 +54,8 @@ def main():
         failures.append("docs/plans/2026-06-14-make-root-override-protection.md is missing")
     if not COMET_PENDING_POLL_PLAN.exists():
         failures.append("docs/plans/2026-06-15-comet-pending-poll-cap.md is missing")
+    if not SOCKET_CLIENT_CAP_PLAN.exists():
+        failures.append("docs/plans/2026-06-17-websocket-client-cap.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -83,16 +86,19 @@ def main():
             "Comet long polls expire after 25 seconds",
             "Comet request bodies are capped at 4096 bytes",
             "Comet accepts at most 100 pending long polls",
+            "WebSocket accepts at most 100 connected clients",
         ),
         "SECURITY.md": (
             "25-second server-side lifetime",
             "Comet request bodies are capped at 4096 bytes",
             "Comet accepts at most 100 pending long polls",
+            "WebSocket accepts at most 100 connected clients",
         ),
         "VISION.md": (
             "Keep idle comet long polls bounded",
             "Bound comet request bodies before form parsing",
             "Cap pending comet long polls at 100",
+            "Cap connected WebSocket clients at 100",
         ),
     }
     for relative_path, contracts in documentation_contracts.items():
@@ -196,6 +202,19 @@ def main():
         failures.append("socket MessageHandler must bind each async delivery to its client")
     if "self.application.chat_clients.discard(client)" not in socket:
         failures.append("socket MessageHandler must discard clients after async delivery failures")
+    for contract in (
+        "MAX_WEBSOCKET_CLIENTS = 100",
+        "WEBSOCKET_OVERLOAD_CLOSE_CODE = 1013",
+        "WEBSOCKET_OVERLOAD_CLOSE_REASON = 'Chat capacity reached'",
+        "def __init__(self, max_chat_clients=MAX_WEBSOCKET_CLIENTS):",
+        "def register_chat_client(self, client):",
+        "if len(self.chat_clients) >= self.max_chat_clients:",
+        "if not self.application.register_chat_client(self):",
+        "code=WEBSOCKET_OVERLOAD_CLOSE_CODE",
+        "reason=WEBSOCKET_OVERLOAD_CLOSE_REASON",
+    ):
+        if contract not in socket:
+            failures.append(f"WebSocket client-cap contract is missing: {contract}")
 
     handler_tests = (ROOT / "tests" / "test_chat_handlers.py").read_text(encoding="utf-8")
     if "test_socket_clients_are_isolated_per_application" not in handler_tests:
@@ -237,6 +256,14 @@ def main():
     ):
         if contract not in handler_tests:
             failures.append(f"WebSocket async-delivery regression contract is missing: {contract}")
+    for contract in (
+        "test_socket_client_admission_bounds_registry_and_reuses_slot",
+        "Application(max_chat_clients=1)",
+        "assert not application.register_chat_client(overloaded)",
+        "assert application.register_chat_client(replacement)",
+    ):
+        if contract not in handler_tests:
+            failures.append(f"WebSocket client-cap unit contract is missing: {contract}")
 
     requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     if "tornado==6.5.7" not in requirements:
@@ -305,6 +332,10 @@ def main():
         "test_long_poll_capacity_rejects_overload_and_reuses_slot",
         'assert overloaded.code == 503',
         'assert overloaded.headers["Retry-After"] == "1"',
+        "test_websocket_capacity_closes_overload_and_reuses_slot",
+        "assert overloaded.close_code == 1013",
+        'assert overloaded.close_reason == "Chat capacity reached"',
+        "assert len(self._app.chat_clients) == 1",
         "test_comet_post_rejects_missing_xsrf_token",
         "test_comet_post_accepts_rendered_xsrf_token",
         "test_comet_post_accepts_maximum_browser_form_body",
@@ -329,11 +360,27 @@ def main():
                     f"{COMET_PENDING_POLL_PLAN.relative_to(ROOT)} must record verification evidence: {evidence}"
                 )
 
+    if SOCKET_CLIENT_CAP_PLAN.exists():
+        socket_client_cap_plan = SOCKET_CLIENT_CAP_PLAN.read_text(encoding="utf-8")
+        for evidence in (
+            "Status: Completed",
+            "repository and external-directory pinned `make check` passed",
+            "hostile WebSocket client-cap mutations were rejected",
+        ):
+            if evidence not in socket_client_cap_plan:
+                failures.append(
+                    f"{SOCKET_CLIENT_CAP_PLAN.relative_to(ROOT)} must record verification evidence: {evidence}"
+                )
+
     for relative_path in ("AGENTS.md", "CHANGES.md"):
         if "Comet accepts at most 100 pending long polls" not in (
             ROOT / relative_path
         ).read_text(encoding="utf-8"):
             failures.append(f"{relative_path} must document the pending comet poll cap")
+        if "WebSocket accepts at most 100 connected clients" not in (
+            ROOT / relative_path
+        ).read_text(encoding="utf-8"):
+            failures.append(f"{relative_path} must document the WebSocket client cap")
 
     static_tests = (ROOT / "tests" / "test_static_assets.py").read_text(encoding="utf-8")
     for contract in (

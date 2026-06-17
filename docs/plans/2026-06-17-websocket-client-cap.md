@@ -1,6 +1,6 @@
 # WebSocket Client Admission Cap
 
-## Status: In Progress
+## Status: Completed
 
 ## Context
 
@@ -135,3 +135,30 @@ security boundary without implying production readiness.
   https://www.tornadoweb.org/en/stable/websocket.html
 - IANA WebSocket Close Code Number Registry (`1013`, `Try Again Later`):
   https://www.iana.org/assignments/websocket/websocket.xhtml
+
+## Work Completed
+
+- Added a 100-client application-owned WebSocket admission cap with one
+  synchronous idempotent registration operation.
+- Closed upgraded overload with registered code `1013` and a stable retryable
+  reason without retaining rejected handlers in the broadcast registry.
+- Preserved idempotent close cleanup so an admitted client's departure
+  immediately releases capacity for a replacement connection.
+- Added focused unit and live Tornado regressions plus maintained static and
+  documentation contracts.
+
+## Verification Completed
+
+- All 39 pinned offline tests passed, including exact-boundary admission,
+  overload close code and reason, admitted-client broadcast continuity, and
+  slot reuse through live Tornado WebSocket connections.
+- repository and external-directory pinned `make check` passed compilation,
+  documentation contracts, 17 workflow mutations, all tests, dependency
+  consistency, and a runtime vulnerability audit with no known findings.
+- Ten hostile WebSocket client-cap mutations were rejected across the limit,
+  atomic admission, overload code and reason, non-retention, unit/runtime
+  regressions, guidance, and completed-plan status.
+- Generated-artifact, dependency-drift, credential-pattern, exact-diff,
+  whitespace, conflict-marker, and staged-path audits passed.
+- No public listener, live external traffic, credentials, browser session, or
+  production deployment was exercised; the sample remains loopback-bound.

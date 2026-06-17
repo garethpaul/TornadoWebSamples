@@ -52,6 +52,8 @@
 - No required secret or credential file was identified in the repository scan. If you add integrations later, keep secrets out of git.
 - Browser chat clients should use same-origin message endpoints rather than hard-coded localhost URLs.
 - Comet accepts at most 100 pending long polls and returns `503` with `Retry-After: 1` when capacity is exhausted.
+- WebSocket accepts at most 100 connected clients and closes temporary
+  overload with code `1013` without retaining the rejected client.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-tornado-web-samples-baseline.md` for the canonical Tornado chat sample baseline.

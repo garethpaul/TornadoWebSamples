@@ -5,7 +5,9 @@ from http.cookies import SimpleCookie
 from pathlib import Path
 from urllib.parse import urlencode
 
+from tornado.httpclient import HTTPRequest
 from tornado.testing import AsyncHTTPTestCase, gen_test
+from tornado.websocket import websocket_connect
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -178,3 +180,49 @@ class TestCometApplication(AsyncHTTPTestCase):
 
         assert response.code == 400
         assert received == []
+
+
+class TestSocketApplication(AsyncHTTPTestCase):
+    def get_app(self):
+        self.socket = load_module(
+            "socket_runtime_app", "socket_chat/application.py"
+        )
+        return self.socket.Application(max_chat_clients=1)
+
+    async def _connect(self):
+        request = HTTPRequest(
+            self.get_url("/message").replace("http://", "ws://", 1),
+            headers={"Origin": self.get_url("/").rstrip("/")},
+        )
+        return await websocket_connect(request)
+
+    @gen_test
+    async def test_websocket_capacity_closes_overload_and_reuses_slot(self):
+        clients = []
+        try:
+            first = await self._connect()
+            clients.append(first)
+            assert len(self._app.chat_clients) == 1
+
+            overloaded = await self._connect()
+            clients.append(overloaded)
+            assert await overloaded.read_message() is None
+            assert overloaded.close_code == 1013
+            assert overloaded.close_reason == "Chat capacity reached"
+            assert len(self._app.chat_clients) == 1
+            await first.write_message(json.dumps({"body": "still connected"}))
+            assert await first.read_message() == "still connected"
+
+            first.close()
+            for _ in range(100):
+                if not self._app.chat_clients:
+                    break
+                await asyncio.sleep(0.01)
+            assert self._app.chat_clients == set()
+
+            replacement = await self._connect()
+            clients.append(replacement)
+            assert len(self._app.chat_clients) == 1
+        finally:
+            for client in clients:
+                client.close()

@@ -12,6 +12,9 @@ from pathlib import Path
 
 MAX_MESSAGE_LENGTH = 500
 MAX_WEBSOCKET_FRAME_SIZE = 4096
+MAX_WEBSOCKET_CLIENTS = 100
+WEBSOCKET_OVERLOAD_CLOSE_CODE = 1013
+WEBSOCKET_OVERLOAD_CLOSE_REASON = 'Chat capacity reached'
 BASE_DIR = Path(__file__).resolve().parent
 logger = logging.getLogger(__name__)
 
@@ -39,7 +42,11 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         )
 
     def open(self):
-        self.application.chat_clients.add(self)
+        if not self.application.register_chat_client(self):
+            self.close(
+                code=WEBSOCKET_OVERLOAD_CLOSE_CODE,
+                reason=WEBSOCKET_OVERLOAD_CLOSE_REASON,
+            )
 
     def on_close(self):
         """
@@ -97,8 +104,9 @@ class Application(tornado.web.Application):
     configuration etc.
     """
 
-    def __init__(self):
+    def __init__(self, max_chat_clients=MAX_WEBSOCKET_CLIENTS):
         self.chat_clients = set()
+        self.max_chat_clients = max_chat_clients
         handlers = [
             (r'/', MainHandler),
             (r'/message', MessageHandler),
@@ -111,6 +119,14 @@ class Application(tornado.web.Application):
             'websocket_max_message_size' : MAX_WEBSOCKET_FRAME_SIZE,
             }
         tornado.web.Application.__init__(self, handlers, **settings)
+
+    def register_chat_client(self, client):
+        if client in self.chat_clients:
+            return True
+        if len(self.chat_clients) >= self.max_chat_clients:
+            return False
+        self.chat_clients.add(client)
+        return True
 
 
 if __name__ == '__main__':

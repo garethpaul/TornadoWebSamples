@@ -31,6 +31,7 @@ Priority:
 - Keep WebSocket callback delivery failures isolated to the failing callback
 - Observe delayed WebSocket delivery failures and remove failed clients
 - Keep connected WebSocket client registries isolated per application
+- Cap connected WebSocket clients at 100 and reject temporary overload
 - Keep browser clients self-contained on native, same-origin APIs
 - Require XSRF protection for comet message submissions
 - Keep WebSocket origin checks restricted to the same host

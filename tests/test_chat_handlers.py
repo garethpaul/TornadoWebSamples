@@ -233,6 +233,24 @@ def test_socket_clients_are_isolated_per_application():
     assert second.chat_clients == set()
 
 
+def test_socket_client_admission_bounds_registry_and_reuses_slot():
+    socket_app = load_module("socket_app", "socket_chat/application.py")
+    application = socket_app.Application(max_chat_clients=1)
+    first = object()
+    overloaded = object()
+    replacement = object()
+
+    assert application.register_chat_client(first)
+    assert application.register_chat_client(first)
+    assert not application.register_chat_client(overloaded)
+    assert application.chat_clients == {first}
+
+    application.chat_clients.discard(first)
+
+    assert application.register_chat_client(replacement)
+    assert application.chat_clients == {replacement}
+
+
 def test_socket_application_bounds_websocket_frames():
     socket_app = load_module("socket_app", "socket_chat/application.py")
     application = socket_app.Application()

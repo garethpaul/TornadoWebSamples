@@ -89,6 +89,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   treats that response as a normal signal to start a fresh bounded poll.
   Comet accepts at most 100 pending long polls and returns `503` with
   `Retry-After: 1` when capacity is exhausted.
+  WebSocket accepts at most 100 connected clients and closes temporary
+  overload with code `1013` (`Try Again Later`); closing a client immediately
+  releases its in-process slot.
 - `make check` also requires completed canonical plans under `docs/plans`.
 - Runtime dependencies pin Tornado 6.5.7, which fixes
   `GHSA-pw6j-qg29-8w7f`; the audit gate rejects affected dependency states.
@@ -129,6 +132,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   WebSocket input bound.
 - See `docs/plans/2026-06-12-websocket-async-delivery-failures.md` for delayed
   WebSocket delivery failure cleanup.
+- See `docs/plans/2026-06-17-websocket-client-cap.md` for bounded WebSocket
+  admission, overload close semantics, and slot-reuse coverage.
 - See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and
   external asset URL coverage.
 - See `docs/plans/2026-06-09-websocket-origin-check.md` for same-host

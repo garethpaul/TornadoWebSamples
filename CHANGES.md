@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-17
+
+- WebSocket accepts at most 100 connected clients and closes temporary
+  overload with registered code `1013` without retaining the rejected client.
+
 ## 2026-06-15
 
 - Comet accepts at most 100 pending long polls and returns `503` with
