@@ -16,6 +16,8 @@ an audited, reproducible dependency set.
 - Make template and static paths independent of the launch directory.
 - Pin and audit runtime and verification dependencies.
 - Run the full no-network gate on maintained Python releases.
+- Keep hosted verification read-only, credential-free, pinned, and bounded.
+- Test workflow policy structurally without adding parser dependencies.
 
 ## Work Completed
 
@@ -29,13 +31,17 @@ an audited, reproducible dependency set.
   26.1.2 release.
 - Added a real HTTP long-poll regression test and launch-directory path test.
 - Added a least-privilege, commit-pinned GitHub Actions matrix for Python 3.10,
-  3.12, and 3.14.
+  3.12, and 3.14 with credential persistence disabled.
+- Added dependency-free structural validation and 17 hostile mutations covering
+  credentials, permissions, triggers, actions, matrix coverage, runtime bounds,
+  dependency installation, and the required gate command.
 - Extended repository checks and documentation for runtime and workflow drift.
 
 ## Verification
 
 - Fresh isolated dependency installation.
 - `python3 scripts/check_docs_plans.py`
+- `python3 -B scripts/test_workflow_contract.py`
 - `python3 -m pytest -q`
 - `python3 -m pip_audit -r requirements.txt`
 - `make check`

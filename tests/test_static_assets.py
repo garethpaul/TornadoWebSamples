@@ -54,6 +54,16 @@ def test_chat_clients_report_browser_errors_to_console():
     assert 'console.error("WebSocket is not ready")' in socket
 
 
+def test_comet_client_treats_no_content_as_normal_repoll():
+    coffee = read_asset("comet_chat/static/cometchat.coffee")
+    javascript = read_asset("comet_chat/static/cometchat.js")
+
+    assert "response.status is 204" in coffee
+    assert "appendMessage data.message unless data is null" in coffee
+    assert "response.status === 204" in javascript
+    assert "if (data !== null)" in javascript
+
+
 def test_templates_are_self_contained_and_submit_to_same_origin():
     for sample in ("comet_chat", "socket_chat"):
         template = read_asset(f"{sample}/templates/index.html")

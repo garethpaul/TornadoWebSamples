@@ -55,7 +55,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   `python3 comet_chat/application.py` or `python3 socket_chat/application.py`.
 - Both tutorial servers bind to `127.0.0.1:8000` by default so the
   unauthenticated chat endpoint is not exposed to the local network.
-- Tornado is pinned to 6.5.6. Template and static asset paths are resolved from
+- Tornado is pinned to 6.5.7. Template and static asset paths are resolved from
   each sample directory, so either command can be launched from another
   working directory.
 
@@ -77,14 +77,37 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   closes. Comet dispatch tests require callback queues to be snapshot and
   cleared before firing so callbacks registered during dispatch wait for the
   next message. They also require one failed callback delivery not to stop later
-  callbacks in the same batch. WebSocket broadcast tests require failed client
-  deliveries to be logged, discarded, and isolated from later callbacks.
+  callbacks in the same batch. WebSocket broadcast tests require synchronous
+  and asynchronous client delivery failures to be observed, logged, discarded,
+  and isolated from later callbacks.
+  Tornado rejects WebSocket frames larger than 4096 bytes before JSON decoding
+  while retaining the 500-character validated chat-body limit.
+  Comet request bodies are capped at 4096 bytes by the standalone HTTP server
+  before Tornado buffers or parses form data, while the same 500-character
+  semantic message limit remains in force.
+  Comet long polls expire after 25 seconds with `204 No Content`; the browser
+  treats that response as a normal signal to start a fresh bounded poll.
+  Comet accepts at most 100 pending long polls and returns `503` with
+  `Retry-After: 1` when capacity is exhausted.
+  WebSocket accepts at most 100 connected clients and closes temporary
+  overload with code `1013` (`Try Again Later`); closing a client immediately
+  releases its in-process slot. A WebSocket handler that is not present in the
+  application registry cannot broadcast messages, which keeps rejected or
+  removed connections from racing the close handshake.
+  WebSocket accepts at most 10 messages per second per connection and closes
+  sustained overload with policy code `1008` before JSON parsing or broadcast.
+  This process-local tutorial control is not authentication, a per-IP quota, or
+  distributed rate limiting.
 - `make check` also requires completed canonical plans under `docs/plans`.
+- Runtime dependencies pin Tornado 6.5.7, which fixes
+  `GHSA-pw6j-qg29-8w7f`; the audit gate rejects affected dependency states.
 - GitHub Actions installs the pinned runtime and test requirements, then runs
   the same `make check` baseline on Python 3.10, 3.12, and 3.14 for pushes,
   pull requests, and manual runs. The workflow uses Ubuntu 24.04, read-only
-  permissions, a ten-minute timeout, concurrency cancellation, and
-  commit-pinned Node 24 actions.
+  permissions, credential-free checkout, a ten-minute timeout, concurrency
+  cancellation, and commit-pinned Node 24 actions. Dependency-free mutation
+  tests reject contradictory or relocated credential settings and other
+  workflow policy regressions.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -111,6 +134,14 @@ When the required SDK or runtime is unavailable, use static checks and source re
   validation coverage.
 - See `docs/plans/2026-06-10-offline-browser-clients.md` for native browser
   clients and comet XSRF enforcement.
+- See `docs/plans/2026-06-12-websocket-frame-limit.md` for the protocol-level
+  WebSocket input bound.
+- See `docs/plans/2026-06-12-websocket-async-delivery-failures.md` for delayed
+  WebSocket delivery failure cleanup.
+- See `docs/plans/2026-06-17-websocket-client-cap.md` for bounded WebSocket
+  admission, overload close semantics, and slot-reuse coverage.
+- See `docs/plans/2026-06-17-websocket-message-rate-limit.md` for the
+  per-connection rolling message-rate boundary.
 - See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and
   external asset URL coverage.
 - See `docs/plans/2026-06-09-websocket-origin-check.md` for same-host
@@ -131,6 +162,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   registry ownership and application-isolation coverage.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the Tornado 6 runtime and CI
   modernization.
+- See `docs/plans/2026-06-14-make-root-override-protection.md` for repository-
+  anchored Make verification under hostile root assignments.
 
 ## Contributing
 

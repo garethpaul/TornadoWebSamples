@@ -1,6 +1,6 @@
-.PHONY: build check lint test verify
+.PHONY: build check contract-test lint test verify
 
-ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PYTHON ?= python3
 
 lint:
@@ -10,9 +10,13 @@ lint:
 test:
 	cd "$(ROOT)" && $(PYTHON) -m pytest -q
 
+contract-test:
+	$(PYTHON) "$(ROOT)/scripts/test_workflow_contract.py"
+	$(PYTHON) "$(ROOT)/scripts/test_websocket_message_rate_contract.py"
+
 build: lint
 
-verify: lint test build
+verify: lint contract-test test build
 
 check: verify
 	env -u PYTHONPATH $(PYTHON) -m pip check

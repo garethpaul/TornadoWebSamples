@@ -35,12 +35,37 @@ Helpful reports include:
 - Browser templates are self-contained and do not load third-party CDN code.
   The comet POST requires Tornado's same-origin XSRF token, while the WebSocket
   endpoint enforces a same-host Origin check. Connected WebSocket clients are
-  scoped to their owning application instance rather than shared globally.
+  scoped to their owning application instance rather than shared globally, and
+  clients whose asynchronous message delivery fails are removed from that
+  registry.
+  WebSocket frames are capped at 4096 bytes before JSON parsing, in addition
+  to the 500-character validated chat-body limit.
+- WebSocket accepts at most 100 connected clients per application process.
+  Temporary overload is closed with code `1013`, and rejected clients are not
+  retained in the broadcast registry. Handlers that are not present in the
+  registry cannot broadcast messages, so rejected or removed connections do not
+  race the close handshake into fan-out. This local cap is not authentication,
+  per-IP throttling, or distributed abuse protection.
+- WebSocket accepts at most 10 messages per second per connection and closes
+  sustained overload with policy code `1008` before parsing or broadcast.
+  This process-local control does not identify users or coordinate quotas
+  across connections, workers, or hosts.
+- Comet long polls have a 25-second server-side lifetime and release their
+  callback/future state on delivery, timeout, cancellation, or disconnect.
+- Comet accepts at most 100 pending long polls and returns `503` with
+  `Retry-After: 1` when capacity is exhausted.
+- Tornado is pinned to 6.5.7 to remediate `GHSA-pw6j-qg29-8w7f`, and the
+  canonical gate audits the runtime dependency graph.
+- Comet request bodies are capped at 4096 bytes by the standalone HTTP server
+  before form parsing. Reverse proxies and alternate deployment entry points
+  must enforce an equivalent or stricter outer limit.
 - GitHub Actions runs the same `make check` baseline as local development with
-  Ubuntu 24.04, read-only permissions, a ten-minute timeout, concurrency
-  cancellation, and commit-pinned Node 24 actions. Keep the workflow limited
-  to local in-process HTTP tests and static checks unless a separate review
-  documents a need for live services.
+  Ubuntu 24.04, read-only permissions, credential-free checkout, a ten-minute
+  timeout, concurrency cancellation, and commit-pinned Node 24 actions.
+  Structural mutation tests reject contradictory credential settings, write
+  permissions, unreviewed actions, and weakened verification commands. Keep
+  the workflow limited to local in-process HTTP tests and static checks unless
+  a separate review documents a need for live services.
 
 ## Service and API Notes
 

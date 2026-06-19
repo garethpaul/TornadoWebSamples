@@ -22,15 +22,27 @@ Priority:
 - Keep browser input hints aligned with server-side message limits
 - Keep comet long-poll callback queues isolated per message store
 - Remove abandoned comet long-poll callbacks when connections close
+- Keep idle comet long polls bounded and release their callback state
+- Cap pending comet long polls at 100 and reject temporary overload explicitly
+- Keep Tornado at or above the reviewed 6.5.7 security patch level
+- Bound comet request bodies before form parsing
 - Keep comet callback dispatch snapshot-based so new waits survive current sends
 - Keep comet callback delivery failures isolated to the failing callback
 - Keep WebSocket callback delivery failures isolated to the failing callback
+- Observe delayed WebSocket delivery failures and remove failed clients
 - Keep connected WebSocket client registries isolated per application
+- Cap connected WebSocket clients at 100 and reject temporary overload
+- Ignore WebSocket messages from handlers outside the application registry
+- Cap each WebSocket connection at 10 incoming messages per second before
+  parsing or broadcast
 - Keep browser clients self-contained on native, same-origin APIs
 - Require XSRF protection for comet message submissions
 - Keep WebSocket origin checks restricted to the same host
+- Bound WebSocket frames before JSON parsing
 - Keep completed maintenance plans under `docs/plans`
 - Keep GitHub Actions aligned with the local `make check` baseline
+- Keep hosted verification read-only, credential-free, pinned, and structurally
+  protected against workflow policy regressions
 - Keep the chat tutorials running on maintained Tornado and Python releases
 - Keep runtime and verification dependencies pinned and audited
 - Keep dependency verification isolated from ambient Python packages

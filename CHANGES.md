@@ -1,5 +1,38 @@
 # Changes
 
+## 2026-06-19
+
+- Ignored WebSocket messages from handlers that are no longer present in the
+  application client registry, preventing rejected or removed connections from
+  broadcasting during close races.
+
+## 2026-06-17
+
+- WebSocket accepts at most 10 messages per second per connection and closes
+  sustained overload before JSON parsing and broadcast fan-out.
+- WebSocket accepts at most 100 connected clients and closes temporary
+  overload with registered code `1013` without retaining the rejected client.
+
+## 2026-06-15
+
+- Comet accepts at most 100 pending long polls and returns `503` with
+  `Retry-After: 1` when capacity is exhausted.
+- Raised Tornado to 6.5.7 to remediate `GHSA-pw6j-qg29-8w7f`.
+
+## 2026-06-13
+
+- Capped standalone comet request bodies at 4096 bytes before Tornado buffers
+  or parses form data, complementing the existing 500-character message limit.
+- Bounded comet long polls to 25 seconds, return `204 No Content` on expiry,
+  and made the browser repoll without logging an empty-body parse error.
+
+## 2026-06-12
+
+- Observed asynchronous WebSocket write failures and removed only the failed
+  client from the application registry.
+- Capped WebSocket frames at 4096 bytes before JSON decoding while preserving
+  the existing 500-character chat-body validation.
+
 ## 2026-06-10
 
 - Scoped connected WebSocket clients to each application instance so separate
@@ -19,7 +52,9 @@
 - Pinned and audited runtime/test dependencies, including pip 26.1.2 for
   `PYSEC-2026-196` remediation.
 - Added a least-privilege GitHub Actions matrix for Python 3.10, 3.12, and 3.14
-  using commit-pinned Node 24 actions.
+  using commit-pinned Node 24 actions and credential-free checkout.
+- Added dependency-free structural workflow tests that reject contradictory or
+  relocated credential settings and other CI policy regressions.
 
 ## 2026-06-09
 
