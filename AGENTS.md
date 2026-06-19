@@ -54,6 +54,8 @@
 - Comet accepts at most 100 pending long polls and returns `503` with `Retry-After: 1` when capacity is exhausted.
 - WebSocket accepts at most 100 connected clients and closes temporary
   overload with code `1013` without retaining the rejected client.
+- WebSocket handlers outside the application client registry must not parse or
+  broadcast messages.
 - WebSocket accepts at most 10 messages per second per connection; preserve
   the pre-parse `1008` policy close and rolling-window expiry coverage.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.

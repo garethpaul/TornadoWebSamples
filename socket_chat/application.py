@@ -97,6 +97,9 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         """
         Message received
         """
+        if self not in self.application.chat_clients:
+            return
+
         if not hasattr(self, '_message_rate_limiter'):
             self._message_rate_limiter = MessageRateLimiter(
                 getattr(

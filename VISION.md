@@ -32,6 +32,7 @@ Priority:
 - Observe delayed WebSocket delivery failures and remove failed clients
 - Keep connected WebSocket client registries isolated per application
 - Cap connected WebSocket clients at 100 and reject temporary overload
+- Ignore WebSocket messages from handlers outside the application registry
 - Cap each WebSocket connection at 10 incoming messages per second before
   parsing or broadcast
 - Keep browser clients self-contained on native, same-origin APIs

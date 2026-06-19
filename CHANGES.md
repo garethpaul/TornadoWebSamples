@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-19
+
+- Ignored WebSocket messages from handlers that are no longer present in the
+  application client registry, preventing rejected or removed connections from
+  broadcasting during close races.
+
 ## 2026-06-17
 
 - WebSocket accepts at most 10 messages per second per connection and closes

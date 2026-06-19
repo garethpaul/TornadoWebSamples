@@ -55,7 +55,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   `python3 comet_chat/application.py` or `python3 socket_chat/application.py`.
 - Both tutorial servers bind to `127.0.0.1:8000` by default so the
   unauthenticated chat endpoint is not exposed to the local network.
-- Tornado is pinned to 6.5.6. Template and static asset paths are resolved from
+- Tornado is pinned to 6.5.7. Template and static asset paths are resolved from
   each sample directory, so either command can be launched from another
   working directory.
 
@@ -91,7 +91,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   `Retry-After: 1` when capacity is exhausted.
   WebSocket accepts at most 100 connected clients and closes temporary
   overload with code `1013` (`Try Again Later`); closing a client immediately
-  releases its in-process slot.
+  releases its in-process slot. A WebSocket handler that is not present in the
+  application registry cannot broadcast messages, which keeps rejected or
+  removed connections from racing the close handshake.
   WebSocket accepts at most 10 messages per second per connection and closes
   sustained overload with policy code `1008` before JSON parsing or broadcast.
   This process-local tutorial control is not authentication, a per-IP quota, or

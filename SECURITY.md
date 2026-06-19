@@ -42,7 +42,9 @@ Helpful reports include:
   to the 500-character validated chat-body limit.
 - WebSocket accepts at most 100 connected clients per application process.
   Temporary overload is closed with code `1013`, and rejected clients are not
-  retained in the broadcast registry. This local cap is not authentication,
+  retained in the broadcast registry. Handlers that are not present in the
+  registry cannot broadcast messages, so rejected or removed connections do not
+  race the close handshake into fan-out. This local cap is not authentication,
   per-IP throttling, or distributed abuse protection.
 - WebSocket accepts at most 10 messages per second per connection and closes
   sustained overload with policy code `1008` before parsing or broadcast.

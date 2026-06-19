@@ -292,6 +292,27 @@ def test_socket_message_rate_limit_discards_client_before_close():
     assert closed == [(1008, "Message rate limit exceeded")]
 
 
+def test_socket_unregistered_handler_cannot_broadcast():
+    socket_app = load_module(
+        "socket_unregistered_sender_app", "socket_chat/application.py"
+    )
+
+    class Client:
+        def __init__(self):
+            self.messages = []
+
+        def write_message(self, message):
+            self.messages.append(message)
+
+    client = Client()
+    handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.application = type("Application", (), {"chat_clients": {client}})()
+
+    handler.on_message('{"body": "hello"}')
+
+    assert client.messages == []
+
+
 def test_socket_application_bounds_websocket_frames():
     socket_app = load_module("socket_app", "socket_chat/application.py")
     application = socket_app.Application()
@@ -327,7 +348,8 @@ def test_socket_message_broadcasts_body_only():
 
     client = Client()
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
-    handler.application = type("Application", (), {"chat_clients": {client}})()
+    handler.write_message = lambda message: None
+    handler.application = type("Application", (), {"chat_clients": {handler, client}})()
 
     handler.on_message('{"body": "hello"}')
 
@@ -339,6 +361,8 @@ def test_socket_message_keeps_client_after_async_delivery_succeeds():
     client = DeferredClient()
     clients = {client}
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.write_message = lambda message: None
+    clients.add(handler)
     handler.application = type("Application", (), {"chat_clients": clients})()
 
     handler.on_message('{"body": "hello"}')
@@ -352,6 +376,8 @@ def test_socket_message_discards_client_after_async_delivery_fails():
     client = DeferredClient(RuntimeError("stream closed"))
     clients = {client}
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.write_message = lambda message: None
+    clients.add(handler)
     handler.application = type("Application", (), {"chat_clients": clients})()
 
     handler.on_message('{"body": "hello"}')
@@ -368,6 +394,8 @@ def test_socket_message_discards_client_after_async_delivery_is_cancelled():
     client = DeferredClient(asyncio.CancelledError())
     clients = {client}
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.write_message = lambda message: None
+    clients.add(handler)
     handler.application = type("Application", (), {"chat_clients": clients})()
 
     handler.on_message('{"body": "hello"}')
@@ -407,8 +435,9 @@ def test_socket_message_continues_after_client_write_error():
     failing_client = FailingClient()
     client = Client()
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
+    handler.write_message = lambda message: None
     handler.application = type("Application", (), {
-        "chat_clients": OrderedCallbacks([failing_client, client]),
+        "chat_clients": OrderedCallbacks([handler, failing_client, client]),
     })()
 
     handler.on_message('{"body": "hello"}')
@@ -441,7 +470,9 @@ def test_socket_message_validation_closes_invalid_frames():
         handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
         closed = []
         handler.close = lambda code=None, reason=None: closed.append((code, reason))
-        handler.application = type("Application", (), {"chat_clients": {client}})()
+        handler.application = type(
+            "Application", (), {"chat_clients": {handler, client}}
+        )()
 
         handler.on_message(frame)
 
@@ -461,7 +492,8 @@ def test_socket_message_validation_trims_body_before_broadcast():
 
     client = Client()
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
-    handler.application = type("Application", (), {"chat_clients": {client}})()
+    handler.write_message = lambda message: None
+    handler.application = type("Application", (), {"chat_clients": {handler, client}})()
 
     handler.on_message('{"body": "  hello  "}')
 

@@ -246,3 +246,17 @@ class TestSocketApplication(AsyncHTTPTestCase):
             assert self._app.chat_clients == set()
         finally:
             client.close()
+
+    @gen_test
+    async def test_websocket_rejects_oversized_frame_before_broadcast(self):
+        client = await self._connect()
+        try:
+            oversized_body = "x" * self.socket.MAX_WEBSOCKET_FRAME_SIZE
+
+            await client.write_message(json.dumps({"body": oversized_body}))
+
+            assert await client.read_message() is None
+            assert client.close_code == 1009
+            assert self._app.chat_clients == set()
+        finally:
+            client.close()

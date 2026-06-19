@@ -86,6 +86,7 @@ def main():
         failures.append("project docs must mention the GitHub Actions baseline")
     documentation_contracts = {
         "README.md": (
+            "Tornado is pinned to 6.5.7",
             "Comet long polls expire after 25 seconds",
             "Comet request bodies are capped at 4096 bytes",
             "Comet accepts at most 100 pending long polls",
@@ -205,6 +206,8 @@ def main():
         failures.append("socket MessageHandler must bind each async delivery to its client")
     if "self.application.chat_clients.discard(client)" not in socket:
         failures.append("socket MessageHandler must discard clients after async delivery failures")
+    if "if self not in self.application.chat_clients:" not in socket:
+        failures.append("socket MessageHandler must ignore messages from unregistered handlers")
     for contract in (
         "MAX_WEBSOCKET_CLIENTS = 100",
         "WEBSOCKET_OVERLOAD_CLOSE_CODE = 1013",
@@ -285,9 +288,11 @@ def main():
             failures.append(f"WebSocket async-delivery regression contract is missing: {contract}")
     for contract in (
         "test_socket_client_admission_bounds_registry_and_reuses_slot",
+        "test_socket_unregistered_handler_cannot_broadcast",
         "Application(max_chat_clients=1)",
         "assert not application.register_chat_client(overloaded)",
         "assert application.register_chat_client(replacement)",
+        "assert client.messages == []",
     ):
         if contract not in handler_tests:
             failures.append(f"WebSocket client-cap unit contract is missing: {contract}")
@@ -372,6 +377,8 @@ def main():
         "test_websocket_capacity_closes_overload_and_reuses_slot",
         "assert overloaded.close_code == 1013",
         'assert overloaded.close_reason == "Chat capacity reached"',
+        "test_websocket_rejects_oversized_frame_before_broadcast",
+        "assert client.close_code == 1009",
         "test_websocket_message_rate_limit_closes_offending_client",
         "assert client.close_code == 1008",
         'assert client.close_reason == "Message rate limit exceeded"',
