@@ -23,6 +23,7 @@ ROOT_OVERRIDE_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protection.md"
 COMET_PENDING_POLL_PLAN = DOCS_PLANS / "2026-06-15-comet-pending-poll-cap.md"
 SOCKET_CLIENT_CAP_PLAN = DOCS_PLANS / "2026-06-17-websocket-client-cap.md"
 SOCKET_MESSAGE_RATE_PLAN = DOCS_PLANS / "2026-06-17-websocket-message-rate-limit.md"
+DEPENDENCY_AUDIT_PLAN = DOCS_PLANS / "2026-06-20-development-dependency-audit.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -59,6 +60,8 @@ def main():
         failures.append("docs/plans/2026-06-17-websocket-client-cap.md is missing")
     if not SOCKET_MESSAGE_RATE_PLAN.exists():
         failures.append("docs/plans/2026-06-17-websocket-message-rate-limit.md is missing")
+    if not DEPENDENCY_AUDIT_PLAN.exists():
+        failures.append("docs/plans/2026-06-20-development-dependency-audit.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -91,6 +94,7 @@ def main():
             "Comet request bodies are capped at 4096 bytes",
             "Comet accepts at most 100 pending long polls",
             "WebSocket accepts at most 100 connected clients",
+            "Development dependencies pin msgpack 1.2.1",
         ),
         "SECURITY.md": (
             "25-second server-side lifetime",
@@ -311,7 +315,9 @@ def main():
     if "tornado==6.5.7" not in requirements:
         failures.append("requirements.txt must pin patched Tornado 6.5.7")
     test_requirements = (ROOT / "test-requirements.txt").read_text(encoding="utf-8")
-    for requirement in ("pip==26.1.2", "pip-audit==2.10.0", "pytest==9.0.3"):
+    for requirement in (
+            "msgpack==1.2.1", "pip==26.1.2", "pip-audit==2.10.0",
+            "pytest==9.0.3"):
         if requirement not in test_requirements:
             failures.append(f"test-requirements.txt must pin {requirement}")
 
@@ -332,9 +338,11 @@ def main():
         '"$(ROOT)/comet_chat/application.py"',
         '"$(ROOT)/socket_chat/application.py"',
         '"$(ROOT)/scripts/check_docs_plans.py"',
+        '"$(ROOT)/scripts/test_dependency_audit_contract.py"',
         '"$(ROOT)/scripts/test_workflow_contract.py"',
         "env -u PYTHONPATH $(PYTHON) -m pip check",
         'pip_audit -r "$(ROOT)/requirements.txt"',
+        'pip_audit -r "$(ROOT)/test-requirements.txt"',
     ):
         if contract not in makefile:
             failures.append(f"Makefile verification contract is missing: {contract}")
@@ -428,6 +436,17 @@ def main():
             if evidence not in socket_message_rate_plan:
                 failures.append(
                     f"{SOCKET_MESSAGE_RATE_PLAN.relative_to(ROOT)} must record verification evidence: {evidence}"
+                )
+    if DEPENDENCY_AUDIT_PLAN.exists():
+        dependency_audit_plan = DEPENDENCY_AUDIT_PLAN.read_text(encoding="utf-8")
+        for evidence in (
+            "Status: Completed",
+            "repository and external-directory `make check` passed",
+            "five hostile dependency-audit mutations were rejected",
+        ):
+            if evidence not in dependency_audit_plan:
+                failures.append(
+                    f"{DEPENDENCY_AUDIT_PLAN.relative_to(ROOT)} must record verification evidence: {evidence}"
                 )
 
     for relative_path in ("AGENTS.md", "CHANGES.md"):

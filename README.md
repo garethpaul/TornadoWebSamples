@@ -101,6 +101,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check` also requires completed canonical plans under `docs/plans`.
 - Runtime dependencies pin Tornado 6.5.7, which fixes
   `GHSA-pw6j-qg29-8w7f`; the audit gate rejects affected dependency states.
+- Development dependencies pin msgpack 1.2.1, which fixes
+  `GHSA-6v7p-g79w-8964`; `make check` audits runtime and development
+  requirement sets separately.
 - GitHub Actions installs the pinned runtime and test requirements, then runs
   the same `make check` baseline on Python 3.10, 3.12, and 3.14 for pushes,
   pull requests, and manual runs. The workflow uses Ubuntu 24.04, read-only
@@ -142,6 +145,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   admission, overload close semantics, and slot-reuse coverage.
 - See `docs/plans/2026-06-17-websocket-message-rate-limit.md` for the
   per-connection rolling message-rate boundary.
+- See `docs/plans/2026-06-20-development-dependency-audit.md` for the
+  development dependency pin and dual-scope audit contract.
 - See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and
   external asset URL coverage.
 - See `docs/plans/2026-06-09-websocket-origin-check.md` for same-host
