@@ -11,6 +11,7 @@ test:
 	cd "$(ROOT)" && $(PYTHON) -m pytest -q
 
 contract-test:
+	$(PYTHON) "$(ROOT)/scripts/test_dependency_audit_contract.py"
 	$(PYTHON) "$(ROOT)/scripts/test_workflow_contract.py"
 	$(PYTHON) "$(ROOT)/scripts/test_websocket_message_rate_contract.py"
 
@@ -21,3 +22,4 @@ verify: lint contract-test test build
 check: verify
 	env -u PYTHONPATH $(PYTHON) -m pip check
 	env -u PYTHONPATH $(PYTHON) -m pip_audit -r "$(ROOT)/requirements.txt"
+	env -u PYTHONPATH $(PYTHON) -m pip_audit -r "$(ROOT)/test-requirements.txt"

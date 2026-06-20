@@ -58,6 +58,8 @@
   broadcast messages.
 - WebSocket accepts at most 10 messages per second per connection; preserve
   the pre-parse `1008` policy close and rolling-window expiry coverage.
+- Keep msgpack pinned to 1.2.1 or newer patched evidence and preserve separate
+  runtime and development requirement audits in `make check`.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-tornado-web-samples-baseline.md` for the canonical Tornado chat sample baseline.

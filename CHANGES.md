@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-20
+
+- Pinned development-time msgpack to 1.2.1 for `GHSA-6v7p-g79w-8964` and
+  extended `make check` to audit runtime and development requirements
+  separately, backed by five hostile dependency-contract mutations.
+
 ## 2026-06-19
 
 - Ignored WebSocket messages from handlers that are no longer present in the
