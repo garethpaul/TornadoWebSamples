@@ -111,6 +111,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   cancellation, and commit-pinned Node 24 actions. Dependency-free mutation
   tests reject contradictory or relocated credential settings and other
   workflow policy regressions.
+- Verification rejects caller-controlled roots, shells, startup makefiles,
+  non-executing/error-ignoring Make modes, and Make-syntax Python overrides;
+  hosted verification invokes `/usr/bin/make` directly.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -169,6 +172,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   modernization.
 - See `docs/plans/2026-06-14-make-root-override-protection.md` for repository-
   anchored Make verification under hostile root assignments.
+- See `docs/plans/2026-06-21-make-authority-isolation.md` for executable Make
+  startup, flag, shell, tool, and root trust-boundary coverage.
 
 ## Contributing
 

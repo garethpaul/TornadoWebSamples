@@ -20,6 +20,7 @@ SOCKET_ASYNC_DELIVERY_PLAN = DOCS_PLANS / "2026-06-12-websocket-async-delivery-f
 COMET_TIMEOUT_PLAN = DOCS_PLANS / "2026-06-13-comet-long-poll-timeout.md"
 COMET_BODY_LIMIT_PLAN = DOCS_PLANS / "2026-06-13-comet-request-body-limit.md"
 ROOT_OVERRIDE_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protection.md"
+MAKE_AUTHORITY_PLAN = DOCS_PLANS / "2026-06-21-make-authority-isolation.md"
 COMET_PENDING_POLL_PLAN = DOCS_PLANS / "2026-06-15-comet-pending-poll-cap.md"
 SOCKET_CLIENT_CAP_PLAN = DOCS_PLANS / "2026-06-17-websocket-client-cap.md"
 SOCKET_MESSAGE_RATE_PLAN = DOCS_PLANS / "2026-06-17-websocket-message-rate-limit.md"
@@ -54,6 +55,8 @@ def main():
         failures.append("docs/plans/2026-06-13-comet-request-body-limit.md is missing")
     if not ROOT_OVERRIDE_PLAN.exists():
         failures.append("docs/plans/2026-06-14-make-root-override-protection.md is missing")
+    if not MAKE_AUTHORITY_PLAN.exists():
+        failures.append("docs/plans/2026-06-21-make-authority-isolation.md is missing")
     if not COMET_PENDING_POLL_PLAN.exists():
         failures.append("docs/plans/2026-06-15-comet-pending-poll-cap.md is missing")
     if not SOCKET_CLIENT_CAP_PLAN.exists():
@@ -322,27 +325,35 @@ def main():
             failures.append(f"test-requirements.txt must pin {requirement}")
 
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-    root_declaration = "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))"
     root_assignments = re.findall(
         r"^(?:override\s+)?ROOT\s*[:+?]?=", makefile, re.MULTILINE
     )
-    if len(root_assignments) != 1 or makefile.count(root_declaration) != 1:
+    if len(root_assignments) != 1:
         failures.append("Makefile must contain exactly one protected repository-root declaration")
-    if makefile.count(f"{root_declaration}\nPYTHON ?= python3") != 1:
-        failures.append("Makefile must keep the protected root before the Python override")
     for contract in (
-        ".PHONY: build check contract-test lint test verify",
+        ".DEFAULT_GOAL := check",
+        ".PHONY: __repository-make-authority build check contract-test lint root-test test verify",
+        "override PYTHON := $(value PYTHON)",
+        "PYTHON must be a literal executable path, not Make syntax",
+        "override SHELL := /bin/sh",
+        "MAKEFLAGS must not be overridden for repository verification",
+        "non-executing or error-ignoring MAKEFLAGS are not supported",
+        "MAKEFILES must be empty",
+        "MAKEFILE_LIST must not be overridden",
+        "build check contract-test lint root-test test verify: __repository-make-authority",
         "build: lint",
-        "verify: lint contract-test test build",
+        "root-test:",
+        '"$$ROOT/scripts/test-makefile-root.sh"',
+        "verify: root-test lint contract-test test build",
         "check: verify",
-        '"$(ROOT)/comet_chat/application.py"',
-        '"$(ROOT)/socket_chat/application.py"',
-        '"$(ROOT)/scripts/check_docs_plans.py"',
-        '"$(ROOT)/scripts/test_dependency_audit_contract.py"',
-        '"$(ROOT)/scripts/test_workflow_contract.py"',
-        "env -u PYTHONPATH $(PYTHON) -m pip check",
-        'pip_audit -r "$(ROOT)/requirements.txt"',
-        'pip_audit -r "$(ROOT)/test-requirements.txt"',
+        '"$$ROOT/comet_chat/application.py"',
+        '"$$ROOT/socket_chat/application.py"',
+        '"$$ROOT/scripts/check_docs_plans.py"',
+        '"$$ROOT/scripts/test_dependency_audit_contract.py"',
+        '"$$ROOT/scripts/test_workflow_contract.py"',
+        'env -u PYTHONPATH "$$PYTHON" -m pip check',
+        'pip_audit -r "$$ROOT/requirements.txt"',
+        'pip_audit -r "$$ROOT/test-requirements.txt"',
     ):
         if contract not in makefile:
             failures.append(f"Makefile verification contract is missing: {contract}")
@@ -351,6 +362,10 @@ def main():
         ROOT / "README.md"
     ).read_text(encoding="utf-8"):
         failures.append("README.md must index Make root override protection evidence")
+    if "docs/plans/2026-06-21-make-authority-isolation.md" not in (
+        ROOT / "README.md"
+    ).read_text(encoding="utf-8"):
+        failures.append("README.md must index Make authority isolation evidence")
 
     templates = [
         (ROOT / "comet_chat" / "templates" / "index.html").read_text(encoding="utf-8"),

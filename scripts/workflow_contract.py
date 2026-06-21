@@ -51,7 +51,7 @@ def validate(workflow):
         errors.append("select the matrix Python version exactly once")
     if len(re.findall(r"^        run: python -m pip install -r requirements\.txt -r test-requirements\.txt$", workflow, re.MULTILINE)) != 1:
         errors.append("install the exact pinned dependency sets once")
-    if len(re.findall(r"^        run: make check$", workflow, re.MULTILINE)) != 1:
+    if len(re.findall(r"^        run: /usr/bin/make check$", workflow, re.MULTILINE)) != 1:
         errors.append("run the canonical gate exactly once")
     if "continue-on-error" in workflow:
         errors.append("not allow verification failures")

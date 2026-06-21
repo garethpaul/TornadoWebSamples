@@ -8,10 +8,10 @@ TEST_REQUIREMENTS = (ROOT / "test-requirements.txt").read_text(encoding="utf-8")
 MAKEFILE = (ROOT / "Makefile").read_text(encoding="utf-8")
 
 RUNTIME_AUDIT = (
-    'env -u PYTHONPATH $(PYTHON) -m pip_audit -r "$(ROOT)/requirements.txt"'
+    'env -u PYTHONPATH "$$PYTHON" -m pip_audit -r "$$ROOT/requirements.txt"'
 )
 TEST_AUDIT = (
-    'env -u PYTHONPATH $(PYTHON) -m pip_audit -r "$(ROOT)/test-requirements.txt"'
+    'env -u PYTHONPATH "$$PYTHON" -m pip_audit -r "$$ROOT/test-requirements.txt"'
 )
 
 

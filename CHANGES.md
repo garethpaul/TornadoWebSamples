@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-21
+
+- Isolated verification and dependency auditing from caller-controlled Make
+  roots, shells, startup files, non-executing modes, and tool syntax.
+- Added adversarial Make regression coverage and pinned hosted verification to
+  `/usr/bin/make`.
+
 ## 2026-06-20
 
 - Pinned development-time msgpack to 1.2.1 for `GHSA-6v7p-g79w-8964` and
