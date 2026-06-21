@@ -2,6 +2,8 @@
 .PHONY: __repository-make-authority build check contract-test lint root-test test verify
 .SECONDEXPANSION:
 
+PUBLIC_TARGETS := build check contract-test lint root-test test verify
+
 PYTHON ?= python3
 override PYTHON := $(value PYTHON)
 export PYTHON
@@ -43,39 +45,45 @@ override MAKEFILES :=
 ifneq ($(origin MAKEFILE_LIST),file)
 $(error MAKEFILE_LIST must not be overridden)
 endif
-override ROOT := $(shell path='$(subst ','"'"',$(value MAKEFILE_LIST))'; path=$$(printf '%s' "$$path" | /usr/bin/sed 's/^ //'); [ -f "$$path" ] || exit 1; directory=$$(/usr/bin/dirname -- "$$path"); CDPATH= cd -- "$$directory" && /bin/pwd -P)
+override REPOSITORY_ROOT := $(shell path='$(subst ','"'"',$(value MAKEFILE_LIST))'; path=$$(printf '%s' "$$path" | /usr/bin/sed 's/^ //'); [ -f "$$path" ] || exit 1; directory=$$(/usr/bin/dirname -- "$$path"); CDPATH= cd -- "$$directory" && /bin/pwd -P)
+override ROOT := $(REPOSITORY_ROOT)
 export ROOT
 ifeq ($(strip $(ROOT)),)
 $(error repository Makefile path could not be resolved)
 endif
 
-build check contract-test lint root-test test verify: $$(if $$(filter file,$$(origin MAKEFILE_LIST)),,$$(error MAKEFILE_LIST must not be overridden))
-build check contract-test lint root-test test verify: $$(if $$(shell path=$$$$(/usr/bin/printf '%s' '$$(subst ','"'"',$$(MAKEFILE_LIST))' | /usr/bin/sed 's/^ //') && [ -f "$$$$path" ] && /usr/bin/printf '%s' ok),,$$(error repository Makefile must be loaded alone))
-build check contract-test lint root-test test verify: __repository-make-authority
+$(PUBLIC_TARGETS): override SHELL := /bin/sh
+$(PUBLIC_TARGETS): override .SHELLFLAGS := -c
+$(PUBLIC_TARGETS): override ROOT := $(REPOSITORY_ROOT)
+$(PUBLIC_TARGETS): override PYTHON := $(value PYTHON)
+
+$(PUBLIC_TARGETS):: $$(if $$(filter file,$$(origin MAKEFILE_LIST)),,$$(error MAKEFILE_LIST must not be overridden))
+$(PUBLIC_TARGETS):: $$(if $$(shell path=$$$$(/usr/bin/printf '%s' '$$(subst ','"'"',$$(MAKEFILE_LIST))' | /usr/bin/sed 's/^ //') && [ -f "$$$$path" ] && /usr/bin/printf '%s' ok),,$$(error repository Makefile must be loaded alone))
+$(PUBLIC_TARGETS):: __repository-make-authority
 
 __repository-make-authority::
 	@:
 
-lint:
+lint::
 	"$$PYTHON" -m py_compile "$$ROOT/comet_chat/application.py" "$$ROOT/socket_chat/application.py"
 	"$$PYTHON" "$$ROOT/scripts/check_docs_plans.py"
 
-test:
+test::
 	cd "$$ROOT" && "$$PYTHON" -m pytest -q
 
-contract-test:
+contract-test::
 	"$$PYTHON" "$$ROOT/scripts/test_dependency_audit_contract.py"
 	"$$PYTHON" "$$ROOT/scripts/test_workflow_contract.py"
 	"$$PYTHON" "$$ROOT/scripts/test_websocket_message_rate_contract.py"
 
-build: lint
+build:: lint
 
-root-test:
+root-test::
 	/bin/sh "$$ROOT/scripts/test-makefile-root.sh"
 
-verify: root-test lint contract-test test build
+verify:: root-test lint contract-test test build
 
-check: verify
+check:: verify
 	env -u PYTHONPATH "$$PYTHON" -m pip check
 	env -u PYTHONPATH "$$PYTHON" -m pip_audit -r "$$ROOT/requirements.txt"
 	env -u PYTHONPATH "$$PYTHON" -m pip_audit -r "$$ROOT/test-requirements.txt"

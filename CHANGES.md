@@ -2,8 +2,12 @@
 
 ## 2026-06-21
 
-- Isolated verification and dependency auditing from caller-controlled Make
-  roots, shells, startup files, non-executing modes, and tool syntax.
+- Bound checked-in verification and dependency auditing against ordinary
+  caller root and shell assignments, later single-colon recipe replacement,
+  non-executing modes, and tool syntax. Documented GNU Make `override`
+  directives, caller-added double-colon recipes, startup parse code, and
+  default Python PATH selection as caller-program authority outside the local
+  Make boundary.
 - Added adversarial Make regression coverage and pinned hosted verification to
   `/usr/bin/make`.
 

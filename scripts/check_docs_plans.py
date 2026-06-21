@@ -333,6 +333,7 @@ def main():
     for contract in (
         ".DEFAULT_GOAL := check",
         ".PHONY: __repository-make-authority build check contract-test lint root-test test verify",
+        "PUBLIC_TARGETS := build check contract-test lint root-test test verify",
         "override PYTHON := $(value PYTHON)",
         "PYTHON must be a literal executable path, not Make syntax",
         "override SHELL := /bin/sh",
@@ -340,12 +341,16 @@ def main():
         "non-executing or error-ignoring MAKEFLAGS are not supported",
         "MAKEFILES must be empty",
         "MAKEFILE_LIST must not be overridden",
-        "build check contract-test lint root-test test verify: __repository-make-authority",
-        "build: lint",
-        "root-test:",
+        "$(PUBLIC_TARGETS): override SHELL := /bin/sh",
+        "$(PUBLIC_TARGETS): override .SHELLFLAGS := -c",
+        "$(PUBLIC_TARGETS): override ROOT := $(REPOSITORY_ROOT)",
+        "$(PUBLIC_TARGETS): override PYTHON := $(value PYTHON)",
+        "$(PUBLIC_TARGETS):: __repository-make-authority",
+        "build:: lint",
+        "root-test::",
         '"$$ROOT/scripts/test-makefile-root.sh"',
-        "verify: root-test lint contract-test test build",
-        "check: verify",
+        "verify:: root-test lint contract-test test build",
+        "check:: verify",
         '"$$ROOT/comet_chat/application.py"',
         '"$$ROOT/socket_chat/application.py"',
         '"$$ROOT/scripts/check_docs_plans.py"',
@@ -366,6 +371,18 @@ def main():
         ROOT / "README.md"
     ).read_text(encoding="utf-8"):
         failures.append("README.md must index Make authority isolation evidence")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    make_authority_plan = MAKE_AUTHORITY_PLAN.read_text(encoding="utf-8")
+    for path, document in (("README.md", readme), (str(MAKE_AUTHORITY_PLAN.relative_to(ROOT)), make_authority_plan)):
+        normalized_document = " ".join(document.split())
+        for boundary in (
+            "GNU Make `override` directives",
+            "startup files",
+            "caller-added double-colon recipes",
+            "PATH resolution of the default `python3`",
+        ):
+            if boundary not in normalized_document:
+                failures.append(f"{path} must document the caller Make boundary: {boundary}")
 
     templates = [
         (ROOT / "comet_chat" / "templates" / "index.html").read_text(encoding="utf-8"),
