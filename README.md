@@ -111,9 +111,15 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   cancellation, and commit-pinned Node 24 actions. Dependency-free mutation
   tests reject contradictory or relocated credential settings and other
   workflow policy regressions.
-- Verification rejects caller-controlled roots, shells, startup makefiles,
-  non-executing/error-ignoring Make modes, and Make-syntax Python overrides;
-  hosted verification invokes `/usr/bin/make` directly.
+- Within the checked-in Makefile boundary, verification ignores ordinary
+  caller root and shell assignments, rejects later single-colon replacement of
+  all seven public aliases, rejects non-executing/error-ignoring Make modes,
+  and rejects Make-syntax Python overrides. Arbitrary caller Make programs are
+  outside that boundary: GNU Make `override` directives, caller-added double-colon
+  recipes, and startup files can execute with Make-level authority before or
+  alongside repository recipes. PATH resolution of the default `python3` is
+  also caller-controlled. Hosted verification invokes
+  `/usr/bin/make check` without startup or extra `-f` files.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
