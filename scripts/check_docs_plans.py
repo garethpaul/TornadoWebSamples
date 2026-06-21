@@ -3,6 +3,8 @@ from pathlib import Path
 import re
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from workflow_contract import validate as validate_workflow
 
 
@@ -356,7 +358,7 @@ def main():
         '"$$ROOT/scripts/check_docs_plans.py"',
         '"$$ROOT/scripts/test_dependency_audit_contract.py"',
         '"$$ROOT/scripts/test_workflow_contract.py"',
-        'env -u PYTHONPATH "$$PYTHON" -m pip check',
+        'env -u PYTHONPATH "$$PYTHON" -I -B -m pip check',
         'pip_audit -r "$$ROOT/requirements.txt"',
         'pip_audit -r "$$ROOT/test-requirements.txt"',
     ):

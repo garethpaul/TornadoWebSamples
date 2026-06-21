@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 set -eu
+HOST_PYTHON=${PYTHON:-python3}
+case $HOST_PYTHON in */*) ;; *) HOST_PYTHON=$(command -v "$HOST_PYTHON") ;; esac
 PATH=/usr/bin:/bin
 export PATH
 ROOT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && /bin/pwd -P)
@@ -53,4 +55,12 @@ build check contract-test lint root-test test verify: override .SHELLFLAGS := -c
 EOF
 rm -f "$OVERRIDE_LOG"; (cd "$CONTROL_DIR"&&TORNADO_OVERRIDE_SHELL_LOG="$OVERRIDE_LOG" /usr/bin/make --no-print-directory -f "$MAKEFILE" -f "$LATER_OVERRIDE" PYTHON="$FAKE_PYTHON" check) >"$TEMP_ROOT/later-override" 2>&1; [ -s "$OVERRIDE_LOG" ]
 BOUNDARY_TEXT="GNU Make \`override\` directives"; grep -Fq "$BOUNDARY_TEXT" "$ROOT_DIR/README.md"; grep -Fq "$BOUNDARY_TEXT" "$ROOT_DIR/docs/plans/2026-06-21-make-authority-isolation.md"
-printf '%s\n' 'Makefile root tests passed: 35 target/authority cases, 1 literal-dollar tool case, 1 raw tool Make-syntax rejection, 2 MAKEFILE_LIST rejections, 2 contained startup-boundary cases, 1 caller MAKEFLAGS rejection, 10 mode-flag rejections, 1 later non-override shell protection, 1 seven-alias recipe-replacement rejection, and 1 documented override-shell boundary control'
+ISOLATION_DIR="$TEMP_ROOT/pythonpath"; ISOLATION_MARKER="$TEMP_ROOT/pythonpath-ran"; mkdir -p "$ISOLATION_DIR"
+cat >"$ISOLATION_DIR/sitecustomize.py" <<'PYTHON'
+import os
+open(os.environ["TORNADO_PYTHONPATH_MARKER"], "w").close()
+os._exit(0)
+PYTHON
+(cd "$CONTROL_DIR" && PYTHONPATH="$ISOLATION_DIR" TORNADO_PYTHONPATH_MARKER="$ISOLATION_MARKER" /usr/bin/make --no-print-directory -f "$ROOT_DIR/Makefile" "PYTHON=$HOST_PYTHON" lint) >"$TEMP_ROOT/pythonpath.out" 2>&1
+[ ! -e "$ISOLATION_MARKER" ]
+printf '%s\n' 'Makefile root tests passed: 35 target/authority cases, 1 literal-dollar tool case, 1 raw tool Make-syntax rejection, 2 MAKEFILE_LIST rejections, 2 contained startup-boundary cases, 1 caller MAKEFLAGS rejection, 10 mode-flag rejections, 1 later non-override shell protection, 1 seven-alias recipe-replacement rejection, 1 documented override-shell boundary control, and 1 hostile PYTHONPATH runtime gate'
