@@ -447,7 +447,7 @@ def test_socket_message_continues_after_client_write_error():
     assert client in handler.application.chat_clients
 
 
-def test_socket_message_validation_closes_invalid_frames():
+def test_socket_message_validation_removes_invalid_senders_before_close():
     socket_app = load_module("socket_app", "socket_chat/application.py")
 
     class Client:
@@ -477,7 +477,12 @@ def test_socket_message_validation_closes_invalid_frames():
         handler.on_message(frame)
 
         assert client.messages == []
+        assert handler.application.chat_clients == {client}
         assert closed == [(1003, "Invalid chat message")]
+
+        handler.on_message('{"body": "late message"}')
+
+        assert client.messages == []
 
 
 def test_socket_message_validation_trims_body_before_broadcast():

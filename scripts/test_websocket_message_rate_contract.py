@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RATE_CHECK = "if not self._message_rate_limiter.allow():"
+RATE_DISCARD = RATE_CHECK + "\n            self.application.chat_clients.discard(self)"
 JSON_DECODE = "parsed = tornado.escape.json_decode(message)"
 EXPIRY = "while self.timestamps and self.timestamps[0] <= cutoff:"
 
@@ -31,8 +32,10 @@ def contract_errors(source, unit_tests, runtime_tests):
         errors.append("open and direct-handler paths must each create an owned limiter")
     if "self.application._message_rate_limiter" in source:
         errors.append("message-rate limiters must not be shared by the application")
-    if source.count("self.application.chat_clients.discard(self)") != 2:
-        errors.append("close and rate-overload paths must both discard the handler")
+    if source.count("self.application.chat_clients.discard(self)") != 3:
+        errors.append("close, invalid-message, and rate-overload paths must discard the handler")
+    if RATE_DISCARD not in source:
+        errors.append("rate-overload rejection must discard the handler before close")
     if RATE_CHECK in source and JSON_DECODE in source:
         if source.index(RATE_CHECK) > source.index(JSON_DECODE):
             errors.append("message-rate enforcement must run before JSON decoding")
@@ -91,8 +94,8 @@ def main():
             "WEBSOCKET_RATE_LIMIT_CLOSE_CODE = 1013",
         ),
         "retained overloaded client": (
-            "self.application.chat_clients.discard(self)",
-            "self.application.chat_clients.discard(None)",
+            RATE_DISCARD,
+            RATE_CHECK + "\n            self.application.chat_clients.discard(None)",
         ),
     }
     for name, (old, new) in mutations.items():

@@ -93,6 +93,10 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
             logger.exception("Could not deliver websocket chat message")
             self.application.chat_clients.discard(client)
 
+    def _close_invalid_message(self):
+        self.application.chat_clients.discard(self)
+        self.close(code=1003, reason='Invalid chat message')
+
     def on_message(self, message):
         """
         Message received
@@ -124,13 +128,13 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         try:
             parsed = tornado.escape.json_decode(message)
         except ValueError:
-            self.close(code=1003, reason='Invalid chat message')
+            self._close_invalid_message()
             return
 
         body = parsed.get('body') if isinstance(parsed, dict) else None
         body = normalize_message(body)
         if body is None:
-            self.close(code=1003, reason='Invalid chat message')
+            self._close_invalid_message()
             return
 
         for cb in list(self.application.chat_clients):

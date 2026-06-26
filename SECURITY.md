@@ -50,6 +50,9 @@ Helpful reports include:
   sustained overload with policy code `1008` before parsing or broadcast.
   This process-local control does not identify users or coordinate quotas
   across connections, workers, or hosts.
+- Invalid WebSocket messages remove the sender from the client registry before
+  close code `1003`, so malformed connections cannot send or receive through
+  broadcast fan-out during the close handshake.
 - Comet long polls have a 25-second server-side lifetime and release their
   callback/future state on delivery, timeout, cancellation, or disconnect.
 - Comet accepts at most 100 pending long polls and returns `503` with

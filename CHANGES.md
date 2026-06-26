@@ -2,6 +2,9 @@
 
 ## 2026-06-26
 
+- Invalid WebSocket messages remove the sender from the client registry before close code `1003`, preventing rejected handlers from sending or receiving during the close handshake.
+- Added failing-first unit coverage for malformed JSON, invalid body shapes,
+  and late sends attempted after invalid-message rejection.
 - Priority P2 cycle: reconciled the four remaining roadmap items against the
   maintained runtime, existing handler tests, and current browser clients.
 - Added separate Comet and WebSocket operating guides covering supported
