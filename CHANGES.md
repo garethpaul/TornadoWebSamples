@@ -5,6 +5,11 @@
 - Invalid WebSocket messages remove the sender from the client registry before close code `1003`, preventing rejected handlers from sending or receiving during the close handshake.
 - Added failing-first unit coverage for malformed JSON, invalid body shapes,
   and late sends attempted after invalid-message rejection.
+- Exact PR head `d19b3db8e5ed7d7a5de5f8046a80166547194421` passed
+  Python 3.10/3.12/3.14 `make check` and CodeQL Actions, JavaScript, and Python,
+  then merged as `4f4722d00ecd70248012b02e58b4b4ed42ba216e`.
+- `$codex-review` stopped before analysis with OpenAI HTTP 401; immutable manual
+  review of the exact merged diff found no actionable issue.
 - Priority P2 cycle: reconciled the four remaining roadmap items against the
   maintained runtime, existing handler tests, and current browser clients.
 - Added separate Comet and WebSocket operating guides covering supported
