@@ -38,7 +38,13 @@ Remove invalid WebSocket senders from broadcast authority before close code
 - Six hostile invalid-message close mutations were rejected across behavior,
   ordering, call-site, test, guidance, and plan-status contracts.
 - Python syntax, whitespace, generated-artifact, and likely-secret audits
-  passed. Hosted checks must pass on the exact pull request head before merge.
+  passed.
+- Exact PR head `d19b3db8e5ed7d7a5de5f8046a80166547194421` passed
+  Python 3.10, 3.12, and 3.14 `make check` plus CodeQL Actions, JavaScript, and
+  Python, then merged as `4f4722d00ecd70248012b02e58b4b4ed42ba216e`.
+- `$codex-review` stopped before analysis with OpenAI HTTP 401 authentication
+  failure. Immutable manual review of the exact merged diff found no actionable
+  issue; no review finding was suppressed.
 
 ## Scope Boundaries
 
