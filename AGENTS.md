@@ -56,6 +56,7 @@
   overload with code `1013` without retaining the rejected client.
 - WebSocket handlers outside the application client registry must not parse or
   broadcast messages.
+- Invalid WebSocket messages remove the sender from the client registry before close code `1003`.
 - WebSocket accepts at most 10 messages per second per connection; preserve
   the pre-parse `1008` policy close and rolling-window expiry coverage.
 - Keep msgpack pinned to 1.2.1 or newer patched evidence and preserve separate

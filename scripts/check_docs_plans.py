@@ -27,6 +27,7 @@ COMET_PENDING_POLL_PLAN = DOCS_PLANS / "2026-06-15-comet-pending-poll-cap.md"
 SOCKET_CLIENT_CAP_PLAN = DOCS_PLANS / "2026-06-17-websocket-client-cap.md"
 SOCKET_MESSAGE_RATE_PLAN = DOCS_PLANS / "2026-06-17-websocket-message-rate-limit.md"
 DEPENDENCY_AUDIT_PLAN = DOCS_PLANS / "2026-06-20-development-dependency-audit.md"
+INVALID_MESSAGE_CLOSE_PLAN = DOCS_PLANS / "2026-06-26-websocket-invalid-message-close.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -67,6 +68,8 @@ def main():
         failures.append("docs/plans/2026-06-17-websocket-message-rate-limit.md is missing")
     if not DEPENDENCY_AUDIT_PLAN.exists():
         failures.append("docs/plans/2026-06-20-development-dependency-audit.md is missing")
+    if not INVALID_MESSAGE_CLOSE_PLAN.exists():
+        failures.append("docs/plans/2026-06-26-websocket-invalid-message-close.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -247,6 +250,15 @@ def main():
         failures.append("socket MessageHandler must discard clients after async delivery failures")
     if "if self not in self.application.chat_clients:" not in socket:
         failures.append("socket MessageHandler must ignore messages from unregistered handlers")
+    invalid_close_contract = (
+        "def _close_invalid_message(self):\n"
+        "        self.application.chat_clients.discard(self)\n"
+        "        self.close(code=1003, reason='Invalid chat message')"
+    )
+    if invalid_close_contract not in socket:
+        failures.append("invalid WebSocket messages must remove the sender before close code 1003")
+    if socket.count("self._close_invalid_message()") != 2:
+        failures.append("both malformed JSON and invalid body paths must use invalid-message cleanup")
     for contract in (
         "MAX_WEBSOCKET_CLIENTS = 100",
         "WEBSOCKET_OVERLOAD_CLOSE_CODE = 1013",
@@ -277,8 +289,8 @@ def main():
             failures.append(f"WebSocket message-rate contract is missing: {contract}")
     if socket.count("self._message_rate_limiter = MessageRateLimiter(") != 2:
         failures.append("WebSocket handlers must own limiters in lifecycle and direct-test paths")
-    if socket.count("self.application.chat_clients.discard(self)") != 2:
-        failures.append("WebSocket close and rate-overload paths must discard the handler")
+    if socket.count("self.application.chat_clients.discard(self)") != 3:
+        failures.append("WebSocket close, invalid-message, and rate-overload paths must discard the handler")
     rate_check = "if not self._message_rate_limiter.allow():"
     json_decode = "parsed = tornado.escape.json_decode(message)"
     if rate_check in socket and json_decode in socket and (
@@ -335,6 +347,13 @@ def main():
     ):
         if contract not in handler_tests:
             failures.append(f"WebSocket client-cap unit contract is missing: {contract}")
+    for contract in (
+        "test_socket_message_validation_removes_invalid_senders_before_close",
+        "assert handler.application.chat_clients == {client}",
+        "handler.on_message('{\"body\": \"late message\"}')",
+    ):
+        if contract not in handler_tests:
+            failures.append(f"WebSocket invalid-message close regression is missing: {contract}")
     for contract in (
         "test_socket_message_rate_limiter_bounds_and_expires_rolling_window",
         "test_socket_message_rate_limiters_are_independent_per_connection",
@@ -512,6 +531,17 @@ def main():
                 failures.append(
                     f"{DEPENDENCY_AUDIT_PLAN.relative_to(ROOT)} must record verification evidence: {evidence}"
                 )
+    if INVALID_MESSAGE_CLOSE_PLAN.exists():
+        invalid_message_close_plan = INVALID_MESSAGE_CLOSE_PLAN.read_text(encoding="utf-8")
+        for evidence in (
+            "Status: Completed",
+            "repository and external-directory `make check`",
+            "hostile invalid-message close mutations",
+        ):
+            if evidence not in invalid_message_close_plan:
+                failures.append(
+                    f"{INVALID_MESSAGE_CLOSE_PLAN.relative_to(ROOT)} must record verification evidence: {evidence}"
+                )
 
     for relative_path in ("AGENTS.md", "CHANGES.md"):
         if "Comet accepts at most 100 pending long polls" not in (
@@ -526,6 +556,13 @@ def main():
             ROOT / relative_path
         ).read_text(encoding="utf-8"):
             failures.append(f"{relative_path} must document the WebSocket message-rate limit")
+        if "Invalid WebSocket messages remove the sender from the client registry before close code `1003`" not in (
+            ROOT / relative_path
+        ).read_text(encoding="utf-8"):
+            failures.append(f"{relative_path} must document invalid-message registry cleanup")
+
+    if "client registry before close code" not in docs or "`1003`" not in docs:
+        failures.append("project docs must document invalid-message registry cleanup")
 
     static_tests = (ROOT / "tests" / "test_static_assets.py").read_text(encoding="utf-8")
     for contract in (

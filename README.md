@@ -104,7 +104,8 @@ failures remove only the failed client and do not stop later deliveries.
   frames close with code `1009`.
 - A frame must decode to an object with a string `body`. The body is trimmed,
   must be non-empty, and uses the same 500-character semantic message limit;
-  invalid messages close with code `1003`.
+  invalid messages remove the sender from the client registry before close code
+  `1003`, preventing close-handshake races from reaching broadcast fan-out.
 - A registered connection may send at most 10 messages per second. Sustained
   overload removes that client and closes it with policy code `1008` before
   JSON parsing or broadcast.
