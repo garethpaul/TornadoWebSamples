@@ -5,39 +5,34 @@
 
 ## Overview
 
-`garethpaul/TornadoWebSamples` is a static web project. Tornadoweb Web Server Samples
+`garethpaul/TornadoWebSamples` contains two local Tornado chat tutorials: an
+HTTP long-polling Comet example and a WebSocket example.
 
-This README is based on the checked-in source, manifests, scripts, and repository metadata on the `master` branch. The project language mix found during review was: JavaScript (2), Python (2).
+Both examples are unauthenticated, process-local, and in-memory. They demonstrate
+transport and handler behavior; they are not production chat services.
 
 ## Repository Contents
 
-- `README.md` - project overview and local usage notes
-- `CHANGES.md` - maintenance history for Tornado chat checks
-- `comet_chat` - source or example code
-- `Makefile` - local verification entry points
-- `docs/plans` - completed maintenance plans for the current baseline
-- `plans` - historical implementation notes
-- `requirements.txt` - runtime dependency notes
-- `scripts` - documentation-plan validators
-- `SECURITY.md` - security reporting and disclosure guidance
-- `socket_chat` - source or example code
-- `test-requirements.txt` - test dependency notes
-- `tests` - focused handler and static asset tests
-- `VISION.md` - project direction and maintenance guardrails
-
-Additional scan context:
-
-- Source directories: comet_chat, socket_chat
-- Dependency and build manifests: Makefile, requirements.txt, test-requirements.txt
-- Entry points or build surfaces: comet_chat/application.py, socket_chat/application.py
-- Test-looking files: tests/test_chat_handlers.py, tests/test_static_assets.py
+- `comet_chat/application.py` - long-poll handlers, callback admission, XSRF,
+  request-body limits, and loopback server entry point
+- `socket_chat/application.py` - WebSocket origin, frame, client, message-rate,
+  validation, and broadcast behavior
+- `comet_chat/static/` and `socket_chat/static/` - dependency-free browser clients
+  that render received messages through text nodes
+- `tests/` - unit, in-process HTTP/WebSocket, and static asset regressions
+- `requirements.txt` and `test-requirements.txt` - exact runtime and verification
+  dependency pins
+- `Makefile` and `scripts/` - canonical tests, audits, workflow contracts, and
+  adversarial Make authority checks
+- `docs/plans/` - completed maintenance evidence for the current baseline
 
 ## Getting Started
 
-### Prerequisites
+### Supported Runtime
 
 - Git
-- Python 3.10 or newer; CI verifies Python 3.10, 3.12, and 3.14
+- CPython 3.10 or newer; CI verifies CPython 3.10, 3.12, and 3.14
+- Tornado is pinned to 6.5.7 exactly in `requirements.txt`
 
 ### Setup
 
@@ -47,17 +42,84 @@ cd TornadoWebSamples
 python3 -m pip install -r requirements.txt -r test-requirements.txt
 ```
 
-The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
+The two servers cannot bind to port `8000` at the same time. Run one tutorial
+per terminal or stop one before starting the other.
 
 ## Running or Using the Project
 
-- Run either sample with Python after installing requirements:
-  `python3 comet_chat/application.py` or `python3 socket_chat/application.py`.
+- Run the Comet sample with `python3 comet_chat/application.py` or the WebSocket
+  sample with `python3 socket_chat/application.py`.
 - Both tutorial servers bind to `127.0.0.1:8000` by default so the
   unauthenticated chat endpoint is not exposed to the local network.
-- Tornado is pinned to 6.5.7. Template and static asset paths are resolved from
+- Template and static asset paths are resolved from
   each sample directory, so either command can be launched from another
   working directory.
+
+### Comet Long-Poll Tutorial
+
+The browser keeps one same-origin `GET /message` request waiting for the next
+message. A `POST /message` submits a message, and the in-process message store
+broadcasts it to the callbacks currently waiting in that application instance.
+Callback queues are snapshot before dispatch, abandoned requests are removed,
+and one callback failure does not stop delivery to later callbacks.
+
+#### Comet Input Validation
+
+- Comet request bodies are capped at 4096 bytes by the standalone HTTP server
+  before Tornado buffers or parses form data. This 4096-byte request-body limit
+  is separate from the semantic message limit.
+- Tornado XSRF cookies are enabled, and a Comet post without the rendered XSRF
+  token is rejected.
+- The `message` form field is trimmed, must be non-empty, and has a
+  500-character semantic message limit. The browser `maxlength` is aligned with
+  that server rule.
+- The browser sends and polls only same-origin `/message` endpoints and renders
+  returned text with `textContent`.
+
+#### Comet Operating Caveats
+
+- Comet long polls expire after 25 seconds with `204 No Content`; the browser
+  treats that as normal and starts another poll.
+- Comet accepts at most 100 pending long polls per process. Temporary overload
+  returns `503 Service Unavailable` with `Retry-After: 1`.
+- Messages are delivered only to callbacks waiting at dispatch time. There is
+  no history, replay, persistence, authentication, user identity, or
+  cross-process fanout.
+- The callback cap is process-wide, not a per-user or per-IP quota. A production
+  service still needs authentication, durable storage, distributed admission,
+  observability, and an explicit privacy model.
+
+### WebSocket Tutorial
+
+The browser opens a same-origin `ws://` or `wss://` connection to `/message`,
+sends JSON objects with a `body` field, and renders received message text with
+`textContent`. The application broadcasts each accepted body to the clients in
+that application instance. Tests prove synchronous and asynchronous delivery
+failures remove only the failed client and do not stop later deliveries.
+
+#### WebSocket Input Validation
+
+- The upgrade accepts only an `Origin` matching the request host.
+- Tornado enforces a 4096-byte frame limit before JSON decoding; oversized
+  frames close with code `1009`.
+- A frame must decode to an object with a string `body`. The body is trimmed,
+  must be non-empty, and uses the same 500-character semantic message limit;
+  invalid messages close with code `1003`.
+- A registered connection may send at most 10 messages per second. Sustained
+  overload removes that client and closes it with policy code `1008` before
+  JSON parsing or broadcast.
+
+#### WebSocket Operating Caveats
+
+- WebSocket accepts at most 100 connected clients per process. Temporary
+  overload closes the rejected connection with code `1013` (`Try Again Later`).
+- Client membership and messages are process-local and in-memory. There is no
+  history, replay, persistence, authentication, user identity, or
+  cross-process fanout.
+- The browser logs connection errors but does not implement reconnect, resume,
+  acknowledgement, or delivery guarantees.
+- The connection and message-rate limits are tutorial resource bounds, not
+  authentication, per-IP quotas, distributed rate limiting, or abuse defense.
 
 ## Testing and Verification
 
@@ -65,39 +127,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   in-process HTTP long-poll and XSRF tests, message validation tests, static
   asset checks, dependency consistency checks, and a vulnerability audit of
   the declared runtime dependency graph.
-- Browser clients use native DOM, Fetch, FormData, and WebSocket APIs with no
-  third-party runtime scripts or stylesheets. Static checks keep all endpoints
-  same-origin, render messages through text nodes, and keep browser input
-  length hints aligned with the server-side limit. The comet form submits
-  Tornado's XSRF token, and tokenless posts are rejected.
-- Handler tests require WebSocket origin checks to accept only the same host,
-  WebSocket client registries to stay isolated per application, and comet
-  long-poll callback queues to stay isolated per message store. They also
-  require abandoned comet long-poll callbacks to be removed when a connection
-  closes. Comet dispatch tests require callback queues to be snapshot and
-  cleared before firing so callbacks registered during dispatch wait for the
-  next message. They also require one failed callback delivery not to stop later
-  callbacks in the same batch. WebSocket broadcast tests require synchronous
-  and asynchronous client delivery failures to be observed, logged, discarded,
-  and isolated from later callbacks.
-  Tornado rejects WebSocket frames larger than 4096 bytes before JSON decoding
-  while retaining the 500-character validated chat-body limit.
-  Comet request bodies are capped at 4096 bytes by the standalone HTTP server
-  before Tornado buffers or parses form data, while the same 500-character
-  semantic message limit remains in force.
-  Comet long polls expire after 25 seconds with `204 No Content`; the browser
-  treats that response as a normal signal to start a fresh bounded poll.
-  Comet accepts at most 100 pending long polls and returns `503` with
-  `Retry-After: 1` when capacity is exhausted.
-  WebSocket accepts at most 100 connected clients and closes temporary
-  overload with code `1013` (`Try Again Later`); closing a client immediately
-  releases its in-process slot. A WebSocket handler that is not present in the
-  application registry cannot broadcast messages, which keeps rejected or
-  removed connections from racing the close handshake.
-  WebSocket accepts at most 10 messages per second per connection and closes
-  sustained overload with policy code `1008` before JSON parsing or broadcast.
-  This process-local tutorial control is not authentication, a per-IP quota, or
-  distributed rate limiting.
+- The handler suite covers callback and client isolation, abandoned callback
+  cleanup, snapshot dispatch ordering, synchronous and asynchronous broadcast
+  failures, message normalization, admission limits, close codes, XSRF, origin
+  checks, frame bounds, and message-rate enforcement.
 - `make check` also requires completed canonical plans under `docs/plans`.
 - Runtime dependencies pin Tornado 6.5.7, which fixes
   `GHSA-pw6j-qg29-8w7f`; the audit gate rejects affected dependency states.
@@ -180,6 +213,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   anchored Make verification under hostile root assignments.
 - See `docs/plans/2026-06-21-make-authority-isolation.md` for executable Make
   startup, flag, shell, tool, and root trust-boundary coverage.
+- See `docs/plans/2026-06-26-tornado-transport-guide.md` for the supported
+  runtime, transport-specific validation, broadcast, and caveat guide.
 
 ## Contributing
 
