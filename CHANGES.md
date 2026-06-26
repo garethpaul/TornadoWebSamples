@@ -1,5 +1,40 @@
 # Changes
 
+## 2026-06-26 14:48 PDT - P2 - Remove invalid WebSocket senders immediately
+
+### Summary
+
+Removed malformed or semantically invalid WebSocket senders from the
+application client registry before closing them with code `1003`.
+
+### Work completed
+
+- Added one shared invalid-message terminal helper for malformed JSON and
+  invalid message bodies.
+- Preserved idempotent `on_close`, pre-parse rate limiting, and valid broadcast
+  behavior.
+- Added focused unit and four hostile contract mutations.
+
+### Validation
+
+- The focused test failed first because rejected handlers remained registered.
+- Checkout and external-path `make check` passed 45 tests, 5 dependency-audit
+  mutations, 18 workflow mutations, 9 message-rate mutations, and 4 new
+  invalid-sender mutations.
+- `pip check` and separate runtime/development dependency audits passed with no
+  known vulnerabilities.
+- Python compilation and `git diff --check` passed.
+- Hosted and exact-head review evidence remain the final pre-merge gates.
+
+### Bugs / findings
+
+- P2: an invalid sender remained broadcast-eligible until Tornado later
+  delivered asynchronous close cleanup.
+
+### Next action
+
+- Run `make check`, review the exact PR head, and merge only after hosted gates.
+
 ## 2026-06-26
 
 - Priority P2 cycle: reconciled the four remaining roadmap items against the

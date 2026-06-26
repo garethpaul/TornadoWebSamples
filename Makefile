@@ -76,6 +76,7 @@ contract-test::
 	"$$PYTHON" -I -B "$$ROOT/scripts/test_dependency_audit_contract.py"
 	"$$PYTHON" -I -B "$$ROOT/scripts/test_workflow_contract.py"
 	"$$PYTHON" -I -B "$$ROOT/scripts/test_websocket_message_rate_contract.py"
+	"$$PYTHON" -I -B "$$ROOT/scripts/test_websocket_invalid_sender_contract.py"
 
 build:: lint
 

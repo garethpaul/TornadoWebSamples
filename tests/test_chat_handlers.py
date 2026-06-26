@@ -477,6 +477,7 @@ def test_socket_message_validation_closes_invalid_frames():
         handler.on_message(frame)
 
         assert client.messages == []
+        assert handler.application.chat_clients == {client}
         assert closed == [(1003, "Invalid chat message")]
 
 

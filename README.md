@@ -104,7 +104,7 @@ failures remove only the failed client and do not stop later deliveries.
   frames close with code `1009`.
 - A frame must decode to an object with a string `body`. The body is trimmed,
   must be non-empty, and uses the same 500-character semantic message limit;
-  invalid messages close with code `1003`.
+  invalid senders leave the broadcast registry before closing with code `1003`.
 - A registered connection may send at most 10 messages per second. Sustained
   overload removes that client and closes it with policy code `1008` before
   JSON parsing or broadcast.
@@ -187,6 +187,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   admission, overload close semantics, and slot-reuse coverage.
 - See `docs/plans/2026-06-17-websocket-message-rate-limit.md` for the
   per-connection rolling message-rate boundary.
+- See `docs/plans/2026-06-26-websocket-invalid-sender-cleanup.md` for immediate
+  registry removal when malformed or invalid messages are policy-closed.
 - See `docs/plans/2026-06-20-development-dependency-audit.md` for the
   development dependency pin and dual-scope audit contract.
 - See `docs/plans/2026-06-09-chat-client-endpoints.md` for client endpoint and

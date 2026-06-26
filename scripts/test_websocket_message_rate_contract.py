@@ -31,8 +31,8 @@ def contract_errors(source, unit_tests, runtime_tests):
         errors.append("open and direct-handler paths must each create an owned limiter")
     if "self.application._message_rate_limiter" in source:
         errors.append("message-rate limiters must not be shared by the application")
-    if source.count("self.application.chat_clients.discard(self)") != 2:
-        errors.append("close and rate-overload paths must both discard the handler")
+    if source.count("self.application.chat_clients.discard(self)") != 3:
+        errors.append("close, rate-overload, and invalid-message paths must discard the handler")
     if RATE_CHECK in source and JSON_DECODE in source:
         if source.index(RATE_CHECK) > source.index(JSON_DECODE):
             errors.append("message-rate enforcement must run before JSON decoding")

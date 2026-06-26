@@ -27,6 +27,7 @@ COMET_PENDING_POLL_PLAN = DOCS_PLANS / "2026-06-15-comet-pending-poll-cap.md"
 SOCKET_CLIENT_CAP_PLAN = DOCS_PLANS / "2026-06-17-websocket-client-cap.md"
 SOCKET_MESSAGE_RATE_PLAN = DOCS_PLANS / "2026-06-17-websocket-message-rate-limit.md"
 DEPENDENCY_AUDIT_PLAN = DOCS_PLANS / "2026-06-20-development-dependency-audit.md"
+SOCKET_INVALID_SENDER_PLAN = DOCS_PLANS / "2026-06-26-websocket-invalid-sender-cleanup.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -67,6 +68,8 @@ def main():
         failures.append("docs/plans/2026-06-17-websocket-message-rate-limit.md is missing")
     if not DEPENDENCY_AUDIT_PLAN.exists():
         failures.append("docs/plans/2026-06-20-development-dependency-audit.md is missing")
+    if not SOCKET_INVALID_SENDER_PLAN.exists():
+        failures.append("docs/plans/2026-06-26-websocket-invalid-sender-cleanup.md is missing")
     if not CI_WORKFLOW.exists():
         failures.append(".github/workflows/check.yml is missing")
 
@@ -227,6 +230,15 @@ def main():
         failures.append("socket MessageHandler.on_message must isolate callback delivery exceptions")
     if "self.application.chat_clients.discard(cb)" not in socket:
         failures.append("socket MessageHandler.on_message must discard callbacks that fail delivery")
+    for contract in (
+        "def _close_invalid_message(self):",
+        "self._close_invalid_message()",
+        "self.close(code=1003, reason='Invalid chat message')",
+    ):
+        if contract not in socket:
+            failures.append(f"socket invalid-sender cleanup contract is missing: {contract}")
+    if socket.count("self._close_invalid_message()") != 2:
+        failures.append("malformed JSON and invalid WebSocket bodies must share invalid-sender cleanup")
     if "self.chat_clients = set()" not in socket:
         failures.append("socket Application must own its connected client registry")
     if "callbacks = set()" in socket:
@@ -277,8 +289,8 @@ def main():
             failures.append(f"WebSocket message-rate contract is missing: {contract}")
     if socket.count("self._message_rate_limiter = MessageRateLimiter(") != 2:
         failures.append("WebSocket handlers must own limiters in lifecycle and direct-test paths")
-    if socket.count("self.application.chat_clients.discard(self)") != 2:
-        failures.append("WebSocket close and rate-overload paths must discard the handler")
+    if socket.count("self.application.chat_clients.discard(self)") != 3:
+        failures.append("WebSocket close, rate-overload, and invalid-message paths must discard the handler")
     rate_check = "if not self._message_rate_limiter.allow():"
     json_decode = "parsed = tornado.escape.json_decode(message)"
     if rate_check in socket and json_decode in socket and (
@@ -345,6 +357,8 @@ def main():
     ):
         if contract not in handler_tests:
             failures.append(f"WebSocket message-rate unit contract is missing: {contract}")
+    if "assert handler.application.chat_clients == {client}" not in handler_tests:
+        failures.append("invalid WebSocket message tests must require immediate sender removal")
 
     requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     if "tornado==6.5.7" not in requirements:
@@ -388,6 +402,8 @@ def main():
         '"$$ROOT/scripts/check_docs_plans.py"',
         '"$$ROOT/scripts/test_dependency_audit_contract.py"',
         '"$$ROOT/scripts/test_workflow_contract.py"',
+        '"$$ROOT/scripts/test_websocket_message_rate_contract.py"',
+        '"$$ROOT/scripts/test_websocket_invalid_sender_contract.py"',
         'env -u PYTHONPATH "$$PYTHON" -I -B -m pip check',
         'pip_audit -r "$$ROOT/requirements.txt"',
         'pip_audit -r "$$ROOT/test-requirements.txt"',
@@ -511,6 +527,17 @@ def main():
             if evidence not in dependency_audit_plan:
                 failures.append(
                     f"{DEPENDENCY_AUDIT_PLAN.relative_to(ROOT)} must record verification evidence: {evidence}"
+                )
+    if SOCKET_INVALID_SENDER_PLAN.exists():
+        invalid_sender_plan = SOCKET_INVALID_SENDER_PLAN.read_text(encoding="utf-8")
+        for evidence in (
+            "Status: Completed",
+            "Full `make check` and external-Makefile gate",
+            "Hostile mutation removing invalid-sender discard",
+        ):
+            if evidence not in invalid_sender_plan:
+                failures.append(
+                    f"{SOCKET_INVALID_SENDER_PLAN.relative_to(ROOT)} must record verification evidence: {evidence}"
                 )
 
     for relative_path in ("AGENTS.md", "CHANGES.md"):

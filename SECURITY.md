@@ -46,6 +46,8 @@ Helpful reports include:
   registry cannot broadcast messages, so rejected or removed connections do not
   race the close handshake into fan-out. This local cap is not authentication,
   per-IP throttling, or distributed abuse protection.
+- Malformed JSON and invalid message bodies remove their sender from the
+  broadcast registry before the `1003` close, without waiting for `on_close`.
 - WebSocket accepts at most 10 messages per second per connection and closes
   sustained overload with policy code `1008` before parsing or broadcast.
   This process-local control does not identify users or coordinate quotas
