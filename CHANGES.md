@@ -1,5 +1,27 @@
 # Changes
 
+## 2026-06-26
+
+- Priority P2 cycle: reconciled the four remaining roadmap items against the
+  maintained runtime, existing handler tests, and current browser clients.
+- Added separate Comet and WebSocket operating guides covering supported
+  CPython/Tornado versions, transport-specific input validation, admission and
+  timeout/close behavior, delivery-failure tests, and production limitations.
+- Replaced stale generated inventory and the mixed transport verification block
+  with source-backed guidance while leaving both tutorial implementations,
+  dependencies, workflows, and limits unchanged.
+- Added fail-closed documentation contracts for the separate Comet and
+  WebSocket operating guides. All 21 hostile documentation mutations were
+  rejected, including version, heading, limit, broadcast, caveat, roadmap,
+  change-history, and plan-status drift. No delegated threads were needed.
+- Verified the exact pinned dependency set in clean CPython 3.12 and 3.14
+  containers. Both `make check` runs passed 45 handler tests, 5 dependency
+  audit mutations, 18 workflow mutations, 9 WebSocket rate-limit mutations,
+  `pip check`, and both dependency audits; the external-path Make invocation
+  also passed on CPython 3.12.
+- The next recommended action is to keep these sections synchronized with any
+  future handler, browser client, dependency, or limit change.
+
 ## 2026-06-21
 
 - Bound checked-in verification and dependency auditing against ordinary

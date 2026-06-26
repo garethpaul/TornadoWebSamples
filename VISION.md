@@ -48,13 +48,7 @@ Priority:
 - Keep dependency verification isolated from ambient Python packages
 - Keep unauthenticated sample servers bound to loopback by default
 - Avoid implying production chat readiness
-
-Next priorities:
-
-- Document supported Python and Tornado versions
-- Add small tests for message broadcast behavior
-- Add separate input validation notes for comet and WebSocket demos
-- Separate long-polling and WebSocket caveats in the README
+- Keep separate Comet and WebSocket setup, validation, broadcast, and caveat guidance
 
 Contribution rules:
 

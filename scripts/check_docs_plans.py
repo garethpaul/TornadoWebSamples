@@ -120,6 +120,36 @@ def main():
             if contract not in document:
                 failures.append(f"{relative_path} must document: {contract}")
 
+    normalized_readme = " ".join((ROOT / "README.md").read_text(encoding="utf-8").split())
+    for contract in (
+        "Supported Runtime",
+        "CPython 3.10 or newer",
+        "Tornado 6.5.7",
+        "Comet Long-Poll Tutorial",
+        "Comet Input Validation",
+        "Comet Operating Caveats",
+        "WebSocket Tutorial",
+        "WebSocket Input Validation",
+        "WebSocket Operating Caveats",
+        "4096-byte request-body limit",
+        "4096-byte frame limit",
+        "500-character semantic message limit",
+        "25 seconds with `204 No Content`",
+        "100 pending long polls",
+        "100 connected clients",
+        "10 messages per second",
+        "synchronous and asynchronous delivery failures",
+        "process-local and in-memory",
+    ):
+        if contract not in normalized_readme:
+            failures.append(f"README transport guide must include: {contract}")
+    normalized_vision = " ".join((ROOT / "VISION.md").read_text(encoding="utf-8").split())
+    if "Keep separate Comet and WebSocket setup, validation, broadcast, and caveat guidance" not in normalized_vision:
+        failures.append("VISION must preserve the transport-specific documentation boundary")
+    normalized_changes = " ".join((ROOT / "CHANGES.md").read_text(encoding="utf-8").split())
+    if "separate Comet and WebSocket operating guides" not in normalized_changes:
+        failures.append("CHANGES must record the transport-guide reconciliation")
+
     comet = (ROOT / "comet_chat" / "application.py").read_text(encoding="utf-8")
     if "@tornado.web.asynchronous" in comet or "self.async_callback" in comet:
         failures.append("comet MessageHandler must not use removed Tornado 4 async APIs")
