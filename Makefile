@@ -18,5 +18,5 @@ build: lint
 verify: lint contract-test test build
 
 check: verify
-	env -u PYTHONPATH $(PYTHON) -m pip check
+	env -u PYTHONPATH $(PYTHON) "$(ROOT)/scripts/check_runtime_deps.py"
 	env -u PYTHONPATH $(PYTHON) -m pip_audit -r "$(ROOT)/requirements.txt"

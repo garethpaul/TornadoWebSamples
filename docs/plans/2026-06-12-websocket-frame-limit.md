@@ -28,7 +28,7 @@ that the server would buffer and decode before rejecting its chat body.
 
 ## Verification
 
-- Fresh environment with Tornado 6.5.6 and pytest 9.0.3
+- Fresh environment with Tornado 6.5.7 and pytest 9.0.3
 - `python -m pytest -q tests/test_chat_handlers.py`
 - `make check`
 - Mutations removing or weakening the frame setting and regression test

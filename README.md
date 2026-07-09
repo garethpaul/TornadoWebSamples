@@ -55,7 +55,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   `python3 comet_chat/application.py` or `python3 socket_chat/application.py`.
 - Both tutorial servers bind to `127.0.0.1:8000` by default so the
   unauthenticated chat endpoint is not exposed to the local network.
-- Tornado is pinned to 6.5.6. Template and static asset paths are resolved from
+- Tornado is pinned to 6.5.7. Template and static asset paths are resolved from
   each sample directory, so either command can be launched from another
   working directory.
 

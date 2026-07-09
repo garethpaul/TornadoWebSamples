@@ -27,7 +27,7 @@ an audited, reproducible dependency set.
 - Anchored template and static paths to each sample's source directory.
 - Restricted both unauthenticated tutorial servers to loopback by default.
 - Updated startup code to use the current IOLoop and autoreload entry points.
-- Pinned Tornado 6.5.6, pytest 9.0.3, pip-audit 2.10.0, and the remediated pip
+- Pinned Tornado 6.5.7, pytest 9.0.3, pip-audit 2.10.0, and the remediated pip
   26.1.2 release.
 - Added a real HTTP long-poll regression test and launch-directory path test.
 - Added a least-privilege, commit-pinned GitHub Actions matrix for Python 3.10,

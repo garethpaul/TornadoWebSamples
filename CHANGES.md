@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-07-09
+
+- Bumped Tornado from 6.5.6 to 6.5.7 to clear `GHSA-pw6j-qg29-8w7f` in the
+  runtime audit gate.
+- Replaced global `pip check` with a project-scoped runtime pin check so shared
+  developer environments do not fail the gate on unrelated packages.
+
 ## 2026-06-12
 
 - Capped WebSocket frames at 4096 bytes before JSON decoding while preserving

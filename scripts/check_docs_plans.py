@@ -121,8 +121,8 @@ def main():
             failures.append(f"WebSocket frame-limit regression contract is missing: {contract}")
 
     requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
-    if "tornado==6.5.6" not in requirements:
-        failures.append("requirements.txt must pin Tornado 6.5.6")
+    if "tornado==6.5.7" not in requirements:
+        failures.append("requirements.txt must pin Tornado 6.5.7")
     test_requirements = (ROOT / "test-requirements.txt").read_text(encoding="utf-8")
     for requirement in ("pip==26.1.2", "pip-audit==2.10.0", "pytest==9.0.3"):
         if requirement not in test_requirements:
@@ -132,7 +132,7 @@ def main():
     for contract in (
         "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))",
         '"$(ROOT)/scripts/test_workflow_contract.py"',
-        "env -u PYTHONPATH $(PYTHON) -m pip check",
+        'env -u PYTHONPATH $(PYTHON) "$(ROOT)/scripts/check_runtime_deps.py"',
         'pip_audit -r "$(ROOT)/requirements.txt"',
     ):
         if contract not in makefile:
