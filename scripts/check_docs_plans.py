@@ -407,7 +407,7 @@ def main():
         '"$$ROOT/scripts/check_docs_plans.py"',
         '"$$ROOT/scripts/test_dependency_audit_contract.py"',
         '"$$ROOT/scripts/test_workflow_contract.py"',
-        'env -u PYTHONPATH "$$PYTHON" -I -B -m pip check',
+        'env -u PYTHONPATH "$$PYTHON" -I -B "$$ROOT/scripts/check_runtime_deps.py"',
         'pip_audit -r "$$ROOT/requirements.txt"',
         'pip_audit -r "$$ROOT/test-requirements.txt"',
     ):

@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-07-09
+
+- Replaced global `pip check` with a project-scoped runtime pin check so shared
+  developer environments do not fail the gate on unrelated packages.
+
 ## 2026-06-26
 
 - Invalid WebSocket messages remove the sender from the client registry before close code `1003`, preventing rejected handlers from sending or receiving during the close handshake.

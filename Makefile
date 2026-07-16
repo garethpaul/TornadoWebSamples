@@ -85,6 +85,6 @@ root-test::
 verify:: root-test lint contract-test test build
 
 check:: verify
-	env -u PYTHONPATH "$$PYTHON" -I -B -m pip check
+	env -u PYTHONPATH "$$PYTHON" -I -B "$$ROOT/scripts/check_runtime_deps.py"
 	env -u PYTHONPATH "$$PYTHON" -I -B -m pip_audit -r "$$ROOT/requirements.txt"
 	env -u PYTHONPATH "$$PYTHON" -I -B -m pip_audit -r "$$ROOT/test-requirements.txt"
