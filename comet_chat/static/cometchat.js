@@ -20,10 +20,15 @@
         if (!response.ok) {
           throw new Error("Message poll failed: " + response.status);
         }
+        if (response.status === 204) {
+          return null;
+        }
         return response.json();
       })
       .then(function(data) {
-        appendMessage(data.message);
+        if (data !== null) {
+          appendMessage(data.message);
+        }
         setTimeout(poll, 0);
       })
       .catch(function(error) {

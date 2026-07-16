@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from workflow_contract import CHECKOUT_ACTION, SETUP_ACTION, validate
 
@@ -41,7 +44,8 @@ mutations = {
     "continued failure": mutate("continued failure", "    strategy:", "    continue-on-error: true\n    strategy:"),
     "wrong Python selector": mutate("wrong Python selector", "python-version: ${{ matrix.python-version }}", 'python-version: "3.12"'),
     "unpinned install": mutate("unpinned install", "-r requirements.txt -r test-requirements.txt", "tornado pytest"),
-    "weakened gate": mutate("weakened gate", "run: make check", "run: make test"),
+    "unqualified Make": mutate("unqualified Make", "run: /usr/bin/make check", "run: make check"),
+    "weakened gate": mutate("weakened gate", "run: /usr/bin/make check", "run: /usr/bin/make test"),
 }
 
 for description, workflow in mutations.items():
