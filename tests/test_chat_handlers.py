@@ -322,6 +322,74 @@ def test_socket_application_bounds_websocket_frames():
     assert socket_app.MAX_WEBSOCKET_FRAME_SIZE > socket_app.MAX_MESSAGE_LENGTH * 4
 
 
+def test_socket_application_default_client_cap_is_one_hundred():
+    """The default cap must be observed, not injected: tests that pass
+    max_chat_clients=N cannot see MAX_WEBSOCKET_CLIENTS move."""
+    socket_app = load_module("socket_default_client_cap_app", "socket_chat/application.py")
+    application = socket_app.Application()
+
+    assert socket_app.MAX_WEBSOCKET_CLIENTS == 100
+    assert application.max_chat_clients == 100
+
+    admitted = [object() for _ in range(100)]
+    for client in admitted:
+        assert application.register_chat_client(client)
+
+    assert len(application.chat_clients) == 100
+    assert not application.register_chat_client(object())
+
+
+def test_socket_default_message_rate_is_ten_per_second():
+    """The default rate must be observed, not injected: tests that pass
+    max_messages_per_window=N cannot see the shipped default move."""
+    socket_app = load_module("socket_default_rate_app", "socket_chat/application.py")
+    application = socket_app.Application()
+
+    assert socket_app.MAX_WEBSOCKET_MESSAGES_PER_WINDOW == 10
+    assert socket_app.WEBSOCKET_MESSAGE_RATE_WINDOW_SECONDS == 1
+    assert application.max_messages_per_window == 10
+    assert application.message_rate_window_seconds == 1
+
+    now = [10.0]
+    limiter = socket_app.MessageRateLimiter(
+        application.max_messages_per_window,
+        application.message_rate_window_seconds,
+        clock=lambda: now[0],
+    )
+
+    assert [limiter.allow() for _ in range(10)] == [True] * 10
+    assert not limiter.allow()
+
+    now[0] = 11.5
+
+    assert limiter.allow()
+
+
+def test_comet_default_long_poll_timeout_is_twenty_five_seconds(monkeypatch):
+    """The value handed to asyncio.wait_for is asserted against the literal 25;
+    comparing it to comet.COMET_LONG_POLL_TIMEOUT_SECONDS would pass for any value."""
+    comet = load_module("comet_default_timeout_app", "comet_chat/application.py")
+    messages = comet.Messages()
+    observed = []
+
+    async def capture_wait(message_future, timeout):
+        observed.append(timeout)
+        message_future.cancel()
+        raise asyncio.TimeoutError
+
+    assert comet.COMET_LONG_POLL_TIMEOUT_SECONDS == 25
+
+    monkeypatch.setattr(comet.asyncio, "wait_for", capture_wait)
+    handler = comet.MessageHandler.__new__(comet.MessageHandler)
+    handler.application = type("Application", (), {"chat_messages": messages})()
+    handler.set_status = lambda status: None
+    handler.on_message = lambda message: None
+
+    asyncio.run(handler.get())
+
+    assert observed == [25]
+
+
 def test_socket_check_origin_allows_same_host_only():
     socket_app = load_module("socket_app", "socket_chat/application.py")
     handler = socket_app.MessageHandler.__new__(socket_app.MessageHandler)
