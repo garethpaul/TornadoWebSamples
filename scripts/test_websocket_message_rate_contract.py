@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import re
 
 
 ROOT = Path(__file__).resolve().parents[1]
+# Whole-line pins: a bare substring accepts any widening that extends the
+# reviewed literal, so "MAX_WEBSOCKET_MESSAGES_PER_WINDOW = 10" would match a
+# shipped value of 10000.
+RATE_CONSTANTS = (
+    ("MAX_WEBSOCKET_MESSAGES_PER_WINDOW", 10),
+    ("WEBSOCKET_MESSAGE_RATE_WINDOW_SECONDS", 1),
+    ("WEBSOCKET_RATE_LIMIT_CLOSE_CODE", 1008),
+)
 RATE_CHECK = "if not self._message_rate_limiter.allow():"
 RATE_DISCARD = RATE_CHECK + "\n            self.application.chat_clients.discard(self)"
 JSON_DECODE = "parsed = tornado.escape.json_decode(message)"
@@ -11,10 +20,12 @@ EXPIRY = "while self.timestamps and self.timestamps[0] <= cutoff:"
 
 def contract_errors(source, unit_tests, runtime_tests):
     errors = []
+    for name, value in RATE_CONSTANTS:
+        if not re.search(
+            rf"^{re.escape(name)} = {re.escape(str(value))}$", source, re.MULTILINE
+        ):
+            errors.append(f"source bound must be declared exactly as: {name} = {value}")
     for fragment in (
-        "MAX_WEBSOCKET_MESSAGES_PER_WINDOW = 10",
-        "WEBSOCKET_MESSAGE_RATE_WINDOW_SECONDS = 1",
-        "WEBSOCKET_RATE_LIMIT_CLOSE_CODE = 1008",
         "WEBSOCKET_RATE_LIMIT_CLOSE_REASON = 'Message rate limit exceeded'",
         "class MessageRateLimiter(object):",
         EXPIRY,
@@ -47,6 +58,12 @@ def contract_errors(source, unit_tests, runtime_tests):
         "test_socket_message_rate_limit_discards_client_before_close",
         "assert second.allow()",
         "assert handler.application.chat_clients == set()",
+        # Every other rate test injects an explicit limit, so only this fixture
+        # can observe the shipped default moving.
+        "test_socket_default_message_rate_is_ten_per_second",
+        "assert socket_app.MAX_WEBSOCKET_MESSAGES_PER_WINDOW == 10",
+        "assert application.max_messages_per_window == 10",
+        "assert [limiter.allow() for _ in range(10)] == [True] * 10",
     ):
         if fragment not in unit_tests:
             errors.append(f"unit coverage is missing: {fragment}")
@@ -97,6 +114,18 @@ def main():
             RATE_DISCARD,
             RATE_CHECK + "\n            self.application.chat_clients.discard(None)",
         ),
+        "widened rate limit": (
+            "MAX_WEBSOCKET_MESSAGES_PER_WINDOW = 10",
+            "MAX_WEBSOCKET_MESSAGES_PER_WINDOW = 10000",
+        ),
+        "appended rate multiplier": (
+            "MAX_WEBSOCKET_MESSAGES_PER_WINDOW = 10",
+            "MAX_WEBSOCKET_MESSAGES_PER_WINDOW = 10 * 10**6",
+        ),
+        "shortened rate window": (
+            "WEBSOCKET_MESSAGE_RATE_WINDOW_SECONDS = 1",
+            "WEBSOCKET_MESSAGE_RATE_WINDOW_SECONDS = 1e-9",
+        ),
     }
     for name, (old, new) in mutations.items():
         mutated = source.replace(old, new, 1)
@@ -105,7 +134,29 @@ def main():
         if not contract_errors(mutated, unit_tests, runtime_tests):
             raise SystemExit(f"rate contract accepted {name}")
 
-    print(f"WebSocket message-rate contract passed ({len(mutations)} mutations rejected)")
+    # The default-rate fixture is the only observer of the shipped default, so
+    # prove the contract notices its removal.
+    unit_mutations = {
+        "deleted default-rate fixture": (
+            "def test_socket_default_message_rate_is_ten_per_second():",
+            "def _disabled_default_message_rate():",
+        ),
+        "injected default-rate fixture": (
+            "assert application.max_messages_per_window == 10",
+            "assert application.max_messages_per_window == limit",
+        ),
+    }
+    for name, (old, new) in unit_mutations.items():
+        mutated_tests = unit_tests.replace(old, new, 1)
+        if mutated_tests == unit_tests:
+            raise SystemExit(f"unit mutation setup failed for {name}")
+        if not contract_errors(source, mutated_tests, runtime_tests):
+            raise SystemExit(f"rate contract accepted {name}")
+
+    print(
+        "WebSocket message-rate contract passed "
+        f"({len(mutations)} source and {len(unit_mutations)} coverage mutations rejected)"
+    )
 
 
 if __name__ == "__main__":

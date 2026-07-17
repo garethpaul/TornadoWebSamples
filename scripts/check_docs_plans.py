@@ -179,7 +179,6 @@ def main():
     if "'xsrf_cookies' : True" not in comet:
         failures.append("comet Application must enable Tornado XSRF cookies")
     for contract in (
-        "MAX_COMET_REQUEST_BODY_SIZE = 4096",
         "def http_server_options():",
         "return {'max_body_size': MAX_COMET_REQUEST_BODY_SIZE}",
         "HTTPServer(app, **http_server_options())",
@@ -187,7 +186,6 @@ def main():
         if contract not in comet:
             failures.append(f"comet request-body limit contract is missing: {contract}")
     for contract in (
-        "COMET_LONG_POLL_TIMEOUT_SECONDS = 25",
         "await asyncio.wait_for(",
         "timeout=COMET_LONG_POLL_TIMEOUT_SECONDS",
         "except asyncio.TimeoutError:",
@@ -210,6 +208,19 @@ def main():
     ):
         if not re.search(rf"^{name} = {value}$", comet, re.MULTILINE):
             failures.append(f"comet pending-poll constant is missing: {name} = {value}")
+    # Anchored whole-line pins: a bare substring check accepts any widening that
+    # merely extends the reviewed literal (``= 25`` prefix-matches ``= 2500``) and
+    # rejects value-preserving refactors, so every reviewed bound is pinned to a
+    # whole line here and to its effective runtime value in tests/.
+    for name, value in (
+        ("MAX_MESSAGE_LENGTH", 500),
+        ("MAX_COMET_REQUEST_BODY_SIZE", 4096),
+        ("COMET_LONG_POLL_TIMEOUT_SECONDS", 25),
+    ):
+        if not re.search(rf"^{re.escape(name)} = {re.escape(str(value))}$", comet, re.MULTILINE):
+            failures.append(
+                f"comet bound must be declared exactly as: {name} = {value}"
+            )
     capacity_check = comet.find("if not self.application.chat_messages.has_capacity():")
     future_allocation = comet.find("asyncio.get_running_loop().create_future()")
     if capacity_check < 0 or future_allocation < 0 or capacity_check > future_allocation:
@@ -234,8 +245,19 @@ def main():
         failures.append("socket Application must own its connected client registry")
     if "callbacks = set()" in socket:
         failures.append("socket clients must not be stored on the handler class")
-    if "MAX_WEBSOCKET_FRAME_SIZE = 4096" not in socket:
-        failures.append("socket Application must define the reviewed WebSocket frame limit")
+    for name, value in (
+        ("MAX_MESSAGE_LENGTH", 500),
+        ("MAX_WEBSOCKET_FRAME_SIZE", 4096),
+        ("MAX_WEBSOCKET_CLIENTS", 100),
+        ("WEBSOCKET_OVERLOAD_CLOSE_CODE", 1013),
+        ("MAX_WEBSOCKET_MESSAGES_PER_WINDOW", 10),
+        ("WEBSOCKET_MESSAGE_RATE_WINDOW_SECONDS", 1),
+        ("WEBSOCKET_RATE_LIMIT_CLOSE_CODE", 1008),
+    ):
+        if not re.search(rf"^{re.escape(name)} = {re.escape(str(value))}$", socket, re.MULTILINE):
+            failures.append(
+                f"socket bound must be declared exactly as: {name} = {value}"
+            )
     if "'websocket_max_message_size' : MAX_WEBSOCKET_FRAME_SIZE" not in socket:
         failures.append("socket Application must enforce the WebSocket frame limit before parsing")
     if "delivery.add_done_callback(" not in socket:
@@ -260,8 +282,6 @@ def main():
     if socket.count("self._close_invalid_message()") != 2:
         failures.append("both malformed JSON and invalid body paths must use invalid-message cleanup")
     for contract in (
-        "MAX_WEBSOCKET_CLIENTS = 100",
-        "WEBSOCKET_OVERLOAD_CLOSE_CODE = 1013",
         "WEBSOCKET_OVERLOAD_CLOSE_REASON = 'Chat capacity reached'",
         "max_chat_clients=MAX_WEBSOCKET_CLIENTS,",
         "def register_chat_client(self, client):",
@@ -273,9 +293,6 @@ def main():
         if contract not in socket:
             failures.append(f"WebSocket client-cap contract is missing: {contract}")
     for contract in (
-        "MAX_WEBSOCKET_MESSAGES_PER_WINDOW = 10",
-        "WEBSOCKET_MESSAGE_RATE_WINDOW_SECONDS = 1",
-        "WEBSOCKET_RATE_LIMIT_CLOSE_CODE = 1008",
         "WEBSOCKET_RATE_LIMIT_CLOSE_REASON = 'Message rate limit exceeded'",
         "class MessageRateLimiter(object):",
         "while self.timestamps and self.timestamps[0] <= cutoff:",
@@ -329,6 +346,24 @@ def main():
     ):
         if contract not in handler_tests:
             failures.append(f"WebSocket frame-limit regression contract is missing: {contract}")
+    # Effective-value coverage for bounds whose other tests inject an explicit
+    # value (max_chat_clients=1, max_messages_per_window=1) and therefore cannot
+    # observe the shipped default moving.
+    for contract in (
+        "test_socket_application_default_client_cap_is_one_hundred",
+        "assert socket_app.MAX_WEBSOCKET_CLIENTS == 100",
+        "assert application.max_chat_clients == 100",
+        "assert not application.register_chat_client(object())",
+        "test_socket_default_message_rate_is_ten_per_second",
+        "assert socket_app.MAX_WEBSOCKET_MESSAGES_PER_WINDOW == 10",
+        "assert application.max_messages_per_window == 10",
+        "assert [limiter.allow() for _ in range(10)] == [True] * 10",
+        "test_comet_default_long_poll_timeout_is_twenty_five_seconds",
+        "assert comet.COMET_LONG_POLL_TIMEOUT_SECONDS == 25",
+        "assert observed == [25]",
+    ):
+        if contract not in handler_tests:
+            failures.append(f"effective default-bound coverage is missing: {contract}")
     for contract in (
         "test_socket_message_keeps_client_after_async_delivery_succeeds",
         "test_socket_message_discards_client_after_async_delivery_fails",
