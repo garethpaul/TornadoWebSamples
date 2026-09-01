@@ -1,4 +1,4 @@
 msgpack==1.2.1
-pip==26.1.2
+pip==26.2
 pip-audit==2.10.0
 pytest==9.0.3
